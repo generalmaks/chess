@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess", "Chess\Chess.csproj", "{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Logic", "Chess.Logic\Chess.Logic.csproj", "{0A96A966-37DA-4D30-9123-6DC98DE00728}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
