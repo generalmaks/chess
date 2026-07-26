@@ -34,6 +34,9 @@ public class ChessBoard
 
         PlaceQueen(0, Team.White);
         PlaceQueen(7, Team.Black);
+
+        PlaceKing(0, Team.White);
+        PlaceKing(7, Team.Black);
     }
 
     public void MakeMove(PieceMove pieceMove, Team team)
@@ -89,5 +92,10 @@ public class ChessBoard
     private void PlaceQueen(int y, Team team)
     {
         GetSpot(new PieceCord(3, y)).SetPiece(PieceFactory.CreatePiece('Q', team));
+    }
+
+    private void PlaceKing(int y, Team team)
+    {
+        GetSpot(new PieceCord(4, y)).SetPiece(PieceFactory.CreatePiece('K', team));
     }
 }

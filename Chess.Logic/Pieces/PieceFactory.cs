@@ -11,6 +11,7 @@ public static class PieceFactory
         'B' => new Bishop(team),
         'R' => new Rook(team),
         'Q' => new Queen(team),
+        'K' => new King(team),
         _ => throw new ArgumentException($"Unknown piece code '{pieceCode}'")
     };
 }
