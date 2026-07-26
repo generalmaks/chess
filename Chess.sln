@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess", "Chess\Chess.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Logic", "Chess.Logic\Chess.Logic.csproj", "{0A96A966-37DA-4D30-9123-6DC98DE00728}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Logic.Tests", "Chess.Logic.Tests\Chess.Logic.Tests.csproj", "{2D98B315-57BD-4BF0-A2ED-119477B40BB6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A96A966-37DA-4D30-9123-6DC98DE00728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D98B315-57BD-4BF0-A2ED-119477B40BB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D98B315-57BD-4BF0-A2ED-119477B40BB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D98B315-57BD-4BF0-A2ED-119477B40BB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D98B315-57BD-4BF0-A2ED-119477B40BB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
