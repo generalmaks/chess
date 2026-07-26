@@ -25,6 +25,15 @@ public class ChessBoard
         
         PlaceKnights(0, Team.White);
         PlaceKnights(7, Team.Black);
+
+        PlaceBishops(0, Team.White);
+        PlaceBishops(7, Team.Black);
+
+        PlaceRooks(0, Team.White);
+        PlaceRooks(7, Team.Black);
+
+        PlaceQueen(0, Team.White);
+        PlaceQueen(7, Team.Black);
     }
 
     public void MakeMove(PieceMove pieceMove, Team team)
@@ -63,5 +72,22 @@ public class ChessBoard
     {
         GetSpot(new PieceCord(1, y)).SetPiece(PieceFactory.CreatePiece('N', team));
         GetSpot(new PieceCord(6, y)).SetPiece(PieceFactory.CreatePiece('N', team));
+    }
+
+    private void PlaceBishops(int y, Team team)
+    {
+        GetSpot(new PieceCord(2, y)).SetPiece(PieceFactory.CreatePiece('B', team));
+        GetSpot(new PieceCord(5, y)).SetPiece(PieceFactory.CreatePiece('B', team));
+    }
+
+    private void PlaceRooks(int y, Team team)
+    {
+        GetSpot(new PieceCord(0, y)).SetPiece(PieceFactory.CreatePiece('R', team));
+        GetSpot(new PieceCord(7, y)).SetPiece(PieceFactory.CreatePiece('R', team));
+    }
+
+    private void PlaceQueen(int y, Team team)
+    {
+        GetSpot(new PieceCord(3, y)).SetPiece(PieceFactory.CreatePiece('Q', team));
     }
 }
