@@ -59,6 +59,4 @@ public class Pawn(Team team) : Piece(team)
             pieceMoves.Add(new PieceMove(pieceCord, new PieceCord(targetX, targetY)));
         }
     }
-
-    private bool IsEnemyPiece(Piece piece) => piece.Team != Team;
 }

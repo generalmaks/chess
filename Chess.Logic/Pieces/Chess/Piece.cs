@@ -12,4 +12,6 @@ public abstract class Piece
     {
         Team = team;
     }
+
+    protected bool IsEnemyPiece(Piece piece) => piece.Team != Team;
 }

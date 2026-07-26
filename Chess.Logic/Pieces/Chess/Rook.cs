@@ -43,6 +43,4 @@ public class Rook(Team team) : Piece(team)
             targetY += dy;
         }
     }
-
-    private bool IsEnemyPiece(Piece piece) => piece.Team != Team;
 }
