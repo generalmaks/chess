@@ -2,7 +2,7 @@ using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
 using Chess.Logic.Tests.Support;
 
-namespace Chess.Logic.Tests;
+namespace Chess.Logic.Tests.Pieces;
 
 public class KingTests
 {
