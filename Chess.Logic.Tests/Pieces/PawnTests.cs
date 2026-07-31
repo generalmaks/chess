@@ -37,7 +37,7 @@ public class PawnTests
     }
 
     [Fact]
-    public void PossibleMoves_BlockedDirectlyAhead_NoMovesAtAll()
+    public void PossibleMoves_BlockedDirectlyAhead_NoForwardMoves()
     {
         var board = TestBoard.Empty();
         var pawn = new Pawn(Team.White);
@@ -48,6 +48,21 @@ public class PawnTests
         var moves = pawn.PossibleMoves(board, coord);
 
         Assert.Empty(moves);
+    }
+
+    [Fact]
+    public void PossibleMoves_BlockedDirectlyAheadWithEnemyOnDiagonal_StillIncludesCapture()
+    {
+        var board = TestBoard.Empty();
+        var pawn = new Pawn(Team.White) { HasMadeFirstMove = true };
+        var coord = new PieceCord(4, 3);
+        board.Place(pawn, coord.X, coord.Y);
+        board.Place(new Pawn(Team.Black), 4, 4);
+        board.Place(new Pawn(Team.Black), 3, 4);
+
+        var moves = pawn.PossibleMoves(board, coord);
+
+        Assert.Equivalent(new[] { new PieceCord(3, 4) }, moves.Select(m => m.To).ToArray());
     }
 
     [Fact]

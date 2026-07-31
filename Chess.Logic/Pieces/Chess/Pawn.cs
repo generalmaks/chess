@@ -20,16 +20,18 @@ public class Pawn(Team team) : Piece(team)
         if (oneStepY < 0 || oneStepY >= board.Spots[pieceCoord.X].Length)
             return [];
 
-        if (board.Spots[pieceCoord.X][oneStepY].IsSpotOccupied) return [.. moves];
-        moves.Add(new PieceMove(pieceCoord, new PieceCord(pieceCoord.X, oneStepY)));
-
-        if (!HasMadeFirstMove)
+        if (!board.Spots[pieceCoord.X][oneStepY].IsSpotOccupied)
         {
-            int twoStepY = pieceCoord.Y + Direction * 2;
-            if (twoStepY >= 0 && twoStepY < board.Spots[pieceCoord.X].Length
-                              && !board.Spots[pieceCoord.X][twoStepY].IsSpotOccupied)
+            moves.Add(new PieceMove(pieceCoord, new PieceCord(pieceCoord.X, oneStepY)));
+
+            if (!HasMadeFirstMove)
             {
-                moves.Add(new PieceMove(pieceCoord, new PieceCord(pieceCoord.X, twoStepY)));
+                int twoStepY = pieceCoord.Y + Direction * 2;
+                if (twoStepY >= 0 && twoStepY < board.Spots[pieceCoord.X].Length
+                                  && !board.Spots[pieceCoord.X][twoStepY].IsSpotOccupied)
+                {
+                    moves.Add(new PieceMove(pieceCoord, new PieceCord(pieceCoord.X, twoStepY)));
+                }
             }
         }
 

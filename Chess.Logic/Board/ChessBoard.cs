@@ -6,7 +6,7 @@ namespace Chess.Logic.Board;
 public class ChessBoard
 {
     public Spot[][] Spots { get; }
-    private List<PieceMove> MoveHistory { get; } = [];
+    public List<MoveRecord> MoveHistory { get; } = [];
 
     public ChessBoard()
     {
@@ -56,7 +56,7 @@ public class ChessBoard
         if (movingPiece is Pawn pawn)
             pawn.HasMadeFirstMove = true;
 
-        MoveHistory.Add(pieceMove);
+        MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove));
         endSpot.SetPiece(movingPiece);
         startSpot.SetPiece(null);
     }
