@@ -44,13 +44,13 @@ public class ChessBoard
         var startSpot = GetSpot(pieceMove.From);
         var endSpot = GetSpot(pieceMove.To);
         if (startSpot.Piece is null)
-            throw new ArgumentException("Can't move non-existent piece");
+            throw new NonExistingPieceException();
         if (startSpot.Piece.Team != team)
-            throw new ArgumentException("Can't move enemy piece");
+            throw new EnemyPieceMovingException();
         if (endSpot.Piece != null && endSpot.Piece.Team == team)
-            throw new ArgumentException("Can't move piece over your piece");
+            throw new MovingOverOwnPiecesException();
         if (!startSpot.Piece.PossibleMoves(this, pieceMove.From).Contains(pieceMove))
-            throw new ArgumentException("Move is not legal for this piece");
+            throw new NoPossibleMovesException();
 
         var movingPiece = startSpot.Piece;
         if (movingPiece is Pawn pawn)

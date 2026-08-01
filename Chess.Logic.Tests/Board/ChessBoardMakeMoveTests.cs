@@ -21,41 +21,41 @@ public class ChessBoardMakeMoveTests
     }
 
     [Fact]
-    public void MakeMove_FromEmptySpot_ThrowsArgumentException()
+    public void MakeMove_FromEmptySpot_ThrowsNonExistingPieceException()
     {
         var board = new ChessBoard();
         var move = new PieceMove(new PieceCord(4, 4), new PieceCord(4, 5));
 
-        Assert.Throws<ArgumentException>(() => board.MakeMove(move, Team.White));
+        Assert.Throws<NonExistingPieceException>(() => board.MakeMove(move, Team.White));
     }
 
     [Fact]
-    public void MakeMove_EnemyPiece_ThrowsArgumentException()
+    public void MakeMove_EnemyPiece_ThrowsEnemyPieceMovingException()
     {
         var board = new ChessBoard();
         var move = new PieceMove(new PieceCord(4, 6), new PieceCord(4, 5));
 
-        Assert.Throws<ArgumentException>(() => board.MakeMove(move, Team.White));
+        Assert.Throws<EnemyPieceMovingException>(() => board.MakeMove(move, Team.White));
     }
 
     [Fact]
-    public void MakeMove_OntoOwnPiece_ThrowsArgumentException()
+    public void MakeMove_OntoOwnPiece_ThrowsMovingOverOwnPiecesException()
     {
         var board = TestBoard.Empty();
         board.Place(new Rook(Team.White), 0, 0);
         board.Place(new Pawn(Team.White), 0, 3);
         var move = new PieceMove(new PieceCord(0, 0), new PieceCord(0, 3));
 
-        Assert.Throws<ArgumentException>(() => board.MakeMove(move, Team.White));
+        Assert.Throws<MovingOverOwnPiecesException>(() => board.MakeMove(move, Team.White));
     }
 
     [Fact]
-    public void MakeMove_IllegalMove_ThrowsArgumentException()
+    public void MakeMove_IllegalMove_ThrowsNoPossibleMovesException()
     {
         var board = new ChessBoard();
         var move = new PieceMove(new PieceCord(4, 1), new PieceCord(4, 4));
 
-        Assert.Throws<ArgumentException>(() => board.MakeMove(move, Team.White));
+        Assert.Throws<NoPossibleMovesException>(() => board.MakeMove(move, Team.White));
     }
 
     [Fact]

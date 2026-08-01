@@ -74,7 +74,7 @@ void HandleSelect()
         playerMoving = playerMoving == Team.White ? Team.Black : Team.White;
         statusMessage = string.Empty;
     }
-    catch (ArgumentException ex)
+    catch (IllegalMoveException ex)
     {
         statusMessage = $"Invalid move: {ex.Message}";
     }
