@@ -36,8 +36,27 @@ public class Pawn(Team team) : Piece(team)
         }
 
         DiagonalCapture(board, pieceCoord, moves);
+        TryAddEnPassant(board, pieceCoord, moves);
 
         return [.. moves];
+    }
+
+    private void TryAddEnPassant(ChessBoard board, PieceCord pieceCord, List<PieceMove> pieceMoves)
+    {
+        if (board.MoveHistory.Count == 0)
+            return;
+
+        var lastMove = board.MoveHistory[^1];
+        if (lastMove.PieceCode != 'P' || Math.Abs(lastMove.Move.To.Y - lastMove.Move.From.Y) != 2)
+            return;
+        if (lastMove.Move.To.Y != pieceCord.Y || Math.Abs(lastMove.Move.To.X - pieceCord.X) != 1)
+            return;
+
+        var passedPawnSpot = board.Spots[lastMove.Move.To.X][lastMove.Move.To.Y];
+        if (passedPawnSpot.Piece is not Pawn passedPawn || !IsEnemyPiece(passedPawn))
+            return;
+
+        pieceMoves.Add(new PieceMove(pieceCord, new PieceCord(lastMove.Move.To.X, pieceCord.Y + Direction)));
     }
 
     private void DiagonalCapture(ChessBoard board, PieceCord pieceCord, List<PieceMove> pieceMoves)

@@ -143,7 +143,9 @@ string FormatMove(MoveRecord record)
     if (record.IsCastling)
         return record.Move.To.X > record.Move.From.X ? "O-O" : "O-O-O";
 
-    var suffix = record.PromotedTo is { } promotedTo ? $"={promotedTo}" : string.Empty;
+    var suffix = record.PromotedTo is { } promotedTo ? $"={promotedTo}"
+        : record.IsEnPassant ? " e.p."
+        : string.Empty;
     return $"{record.PieceCode}{record.Move.From.X}{record.Move.From.Y}->{record.PieceCode}{record.Move.To.X}{record.Move.To.Y}{suffix}";
 }
 

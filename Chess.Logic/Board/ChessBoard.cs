@@ -67,7 +67,10 @@ public class ChessBoard
                 break;
             case Pawn pawn:
                 pawn.HasMadeFirstMove = true;
-                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
+                bool isEnPassant = pieceMove.To.X != pieceMove.From.X && endSpot.Piece is null;
+                if (isEnPassant)
+                    GetSpot(new PieceCord(pieceMove.To.X, pieceMove.From.Y)).SetPiece(null);
+                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false, IsEnPassant: isEnPassant));
                 break;
             case King king:
                 king.HasMoved = true;
