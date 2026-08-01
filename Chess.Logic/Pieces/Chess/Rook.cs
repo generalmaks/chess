@@ -5,6 +5,7 @@ namespace Chess.Logic.Pieces.Chess;
 public class Rook(Team team) : Piece(team)
 {
     public override char PieceCode => 'R';
+    public bool HasMoved { get; set; }
 
     private static readonly (int dx, int dy)[] Directions =
     [

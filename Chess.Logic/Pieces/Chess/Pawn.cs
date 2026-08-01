@@ -61,4 +61,16 @@ public class Pawn(Team team) : Piece(team)
             pieceMoves.Add(new PieceMove(pieceCord, new PieceCord(targetX, targetY)));
         }
     }
+
+    public override IEnumerable<PieceCord> GetAttackedSquares(ChessBoard board, PieceCord pieceCord)
+    {
+        int targetY = pieceCord.Y + Direction;
+        if (targetY < 0 || targetY >= board.Spots[pieceCord.X].Length)
+            yield break;
+
+        if (pieceCord.X + 1 < board.Spots.Length)
+            yield return new PieceCord(pieceCord.X + 1, targetY);
+        if (pieceCord.X - 1 >= 0)
+            yield return new PieceCord(pieceCord.X - 1, targetY);
+    }
 }

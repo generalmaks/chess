@@ -53,12 +53,66 @@ public class ChessBoard
             throw new NoPossibleMovesException();
 
         var movingPiece = startSpot.Piece;
-        if (movingPiece is Pawn pawn)
-            pawn.HasMadeFirstMove = true;
-
-        MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove));
+        switch (movingPiece)
+        {
+            case Pawn pawn:
+                pawn.HasMadeFirstMove = true;
+                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
+                break;
+            case King king:
+                king.HasMoved = true;
+                if (Math.Abs(pieceMove.To.X - pieceMove.From.X) == 2)
+                {
+                    CastleRook(pieceMove);
+                    MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, true));
+                }
+                else
+                {
+                    MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
+                }
+                break;
+            case Rook rook:
+                rook.HasMoved = true;
+                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
+                break;
+            default:
+                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
+                break;
+        }
+        
         endSpot.SetPiece(movingPiece);
         startSpot.SetPiece(null);
+    }
+
+    public bool IsSquareAttacked(PieceCord coord, Team byTeam)
+    {
+        foreach (var column in Spots)
+        {
+            foreach (var spot in column)
+            {
+                if (spot.Piece is { } piece && piece.Team == byTeam &&
+                    piece.GetAttackedSquares(this, spot.Coord).Contains(coord))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void CastleRook(PieceMove kingMove)
+    {
+        int step = kingMove.To.X > kingMove.From.X ? 1 : -1;
+        int rookFromX = step == 1 ? Spots.Length - 1 : 0;
+        var rookFrom = new PieceCord(rookFromX, kingMove.From.Y);
+        var rookTo = new PieceCord(kingMove.From.X + step, kingMove.From.Y);
+
+        var rookSpot = GetSpot(rookFrom);
+        var rook = rookSpot.Piece;
+        if (rook is Rook r)
+            r.HasMoved = true;
+
+        GetSpot(rookTo).SetPiece(rook);
+        rookSpot.SetPiece(null);
     }
 
     private Spot GetSpot(PieceCord coord) => Spots[coord.X][coord.Y];

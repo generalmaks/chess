@@ -1,3 +1,3 @@
 namespace Chess.Logic.Board;
 
-public record MoveRecord(char PieceCode, PieceMove Move);
+public record MoveRecord(char PieceCode, PieceMove Move, bool IsCastling);

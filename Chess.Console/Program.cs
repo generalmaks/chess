@@ -91,7 +91,7 @@ void Render()
 
     foreach (var record in board.MoveHistory)
     {
-        Console.WriteLine($"{record.PieceCode}{record.Move.From.X}{record.Move.From.Y}->{record.PieceCode}{record.Move.To.X}{record.Move.To.Y}");
+        Console.WriteLine(FormatMove(record));
     }
 
     Console.Write("-----\n");
@@ -116,6 +116,14 @@ void Render()
     Console.WriteLine($"{playerMoving}: arrows to move, Enter to select/move, Esc to cancel, Q to quit.");
     if (!string.IsNullOrEmpty(statusMessage))
         Console.WriteLine(statusMessage);
+}
+
+string FormatMove(MoveRecord record)
+{
+    if (record.IsCastling)
+        return record.Move.To.X > record.Move.From.X ? "O-O" : "O-O-O";
+
+    return $"{record.PieceCode}{record.Move.From.X}{record.Move.From.Y}->{record.PieceCode}{record.Move.To.X}{record.Move.To.Y}";
 }
 
 void DrawSquare(int x, int y)
