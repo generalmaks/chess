@@ -53,6 +53,8 @@ public class ChessBoard
             throw new MovingOverOwnPiecesException();
         if (!startSpot.Piece.PossibleMoves(this, pieceMove.From).Contains(pieceMove))
             throw new NoPossibleMovesException();
+        if (MoveLeavesKingInCheck(pieceMove, team))
+            throw new MoveLeavesKingInCheckException();
 
         var movingPiece = startSpot.Piece;
         switch (movingPiece)
@@ -110,6 +112,92 @@ public class ChessBoard
         }
 
         return false;
+    }
+
+    public bool IsInCheck(Team team)
+    {
+        if (FindKing(team) is not { } kingCoord)
+            return false;
+
+        var opponent = team == Team.White ? Team.Black : Team.White;
+        return IsSquareAttacked(kingCoord, opponent);
+    }
+
+    // Pseudo-legal moves filtered down to ones that don't leave the mover's own
+    // king in check. This is also what stops a player from making any move at all
+    // while already in check unless the move resolves it.
+    public PieceMove[] GetLegalMoves(PieceCord from)
+    {
+        if (GetSpot(from).Piece is not { } piece)
+            return [];
+
+        return piece.PossibleMoves(this, from)
+            .Where(move => !MoveLeavesKingInCheck(move, piece.Team))
+            .ToArray();
+    }
+
+    private PieceCord? FindKing(Team team)
+    {
+        foreach (var column in Spots)
+        {
+            foreach (var spot in column)
+            {
+                if (spot.Piece is King && spot.Piece.Team == team)
+                    return spot.Coord;
+            }
+        }
+
+        return null;
+    }
+
+    // Occupancy is all that matters for a self-check simulation (a piece never
+    // threatens its own king), so this moves the actual piece rather than
+    // recreating promotion/capture logic, then restores every square it touched.
+    private bool MoveLeavesKingInCheck(PieceMove move, Team team)
+    {
+        var fromSpot = GetSpot(move.From);
+        var toSpot = GetSpot(move.To);
+        var movingPiece = fromSpot.Piece!;
+        var capturedPiece = toSpot.Piece;
+
+        Spot? enPassantSpot = null;
+        Piece? enPassantPiece = null;
+        if (movingPiece is Pawn && move.To.X != move.From.X && toSpot.Piece is null)
+        {
+            enPassantSpot = GetSpot(new PieceCord(move.To.X, move.From.Y));
+            enPassantPiece = enPassantSpot.Piece;
+            enPassantSpot.SetPiece(null);
+        }
+
+        Spot? rookFromSpot = null;
+        Spot? rookToSpot = null;
+        Piece? rookPiece = null;
+        if (movingPiece is King && Math.Abs(move.To.X - move.From.X) == 2)
+        {
+            int step = move.To.X > move.From.X ? 1 : -1;
+            int rookFromX = step == 1 ? Spots.Length - 1 : 0;
+            rookFromSpot = GetSpot(new PieceCord(rookFromX, move.From.Y));
+            rookToSpot = GetSpot(new PieceCord(move.From.X + step, move.From.Y));
+            rookPiece = rookFromSpot.Piece;
+            rookToSpot.SetPiece(rookPiece);
+            rookFromSpot.SetPiece(null);
+        }
+
+        toSpot.SetPiece(movingPiece);
+        fromSpot.SetPiece(null);
+
+        var inCheck = IsInCheck(team);
+
+        fromSpot.SetPiece(movingPiece);
+        toSpot.SetPiece(capturedPiece);
+        enPassantSpot?.SetPiece(enPassantPiece);
+        if (rookFromSpot != null)
+        {
+            rookFromSpot.SetPiece(rookPiece);
+            rookToSpot!.SetPiece(null);
+        }
+
+        return inCheck;
     }
 
     private void CastleRook(PieceMove kingMove)

@@ -11,3 +11,5 @@ public class NoPossibleMovesException() : IllegalMoveException("Move is not lega
 public class NonExistingPieceException() : IllegalMoveException("Can't move non-existent piece");
 
 public class InvalidPromotionPieceException() : IllegalMoveException("Promotion piece must be a Queen, Rook, Bishop, or Knight");
+
+public class MoveLeavesKingInCheckException() : IllegalMoveException("Can't make a move that leaves your king in check");
