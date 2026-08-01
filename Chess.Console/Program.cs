@@ -7,10 +7,18 @@ var cursor = new PieceCord(4, 1);
 PieceCord? selected = null;
 PieceMove[] legalMoves = [];
 var statusMessage = string.Empty;
+var gameOver = false;
 
 while (true)
 {
     Render();
+
+    if (gameOver)
+    {
+        if (Console.ReadKey(intercept: true).Key == ConsoleKey.Q)
+            return;
+        continue;
+    }
 
     var key = Console.ReadKey(intercept: true).Key;
     switch (key)
@@ -77,6 +85,18 @@ void HandleSelect()
         board.MakeMove(new PieceMove(from, cursor), playerMoving, promotion);
         playerMoving = playerMoving == Team.White ? Team.Black : Team.White;
         statusMessage = string.Empty;
+
+        if (board.IsCheckmate(playerMoving))
+        {
+            var winner = playerMoving == Team.White ? Team.Black : Team.White;
+            statusMessage = $"Checkmate! {winner} wins. Press Q to quit.";
+            gameOver = true;
+        }
+        else if (board.IsStalemate(playerMoving))
+        {
+            statusMessage = "Stalemate! The game is a draw. Press Q to quit.";
+            gameOver = true;
+        }
     }
     catch (IllegalMoveException ex)
     {
@@ -134,7 +154,7 @@ void Render()
     Console.Write("-----\n");
 
     Console.WriteLine($"{playerMoving}: arrows to move, Enter to select/move, Esc to cancel, Q to quit.");
-    if (board.IsInCheck(playerMoving))
+    if (!gameOver && board.IsInCheck(playerMoving))
         Console.WriteLine($"{playerMoving} is in check!");
     if (!string.IsNullOrEmpty(statusMessage))
         Console.WriteLine(statusMessage);

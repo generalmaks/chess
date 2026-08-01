@@ -89,4 +89,64 @@ public class CheckTests
         Assert.False(board.IsInCheck(Team.White));
         Assert.IsType<Rook>(board.Spots[4][3].Piece);
     }
+
+    [Fact]
+    public void IsCheckmate_BackRankMate_ReturnsTrue()
+    {
+        var board = TestBoard.Empty();
+        board.Place(new King(Team.White), 4, 0);
+        board.Place(new Pawn(Team.White), 3, 1);
+        board.Place(new Pawn(Team.White), 4, 1);
+        board.Place(new Pawn(Team.White), 5, 1);
+        board.Place(new Rook(Team.Black), 0, 0);
+
+        Assert.True(board.IsInCheck(Team.White));
+        Assert.True(board.IsCheckmate(Team.White));
+    }
+
+    [Fact]
+    public void IsCheckmate_CheckCanBeBlocked_ReturnsFalse()
+    {
+        var board = TestBoard.Empty();
+        board.Place(new King(Team.White), 4, 0);
+        board.Place(new Rook(Team.White), 0, 3);
+        board.Place(new Rook(Team.Black), 4, 7);
+
+        Assert.True(board.IsInCheck(Team.White));
+        Assert.False(board.IsCheckmate(Team.White));
+    }
+
+    [Fact]
+    public void IsCheckmate_NotInCheck_ReturnsFalse()
+    {
+        var board = TestBoard.Empty();
+        board.Place(new King(Team.White), 4, 0);
+
+        Assert.False(board.IsCheckmate(Team.White));
+    }
+
+    [Fact]
+    public void IsStalemate_KingHasNoMovesButNotInCheck_ReturnsTrue()
+    {
+        var board = TestBoard.Empty();
+        board.Place(new King(Team.White), 0, 0);
+        board.Place(new King(Team.Black), 2, 1);
+        board.Place(new Queen(Team.Black), 1, 2);
+
+        Assert.False(board.IsInCheck(Team.White));
+        Assert.True(board.IsStalemate(Team.White));
+    }
+
+    [Fact]
+    public void IsStalemate_WhileInCheck_ReturnsFalse()
+    {
+        var board = TestBoard.Empty();
+        board.Place(new King(Team.White), 4, 0);
+        board.Place(new Pawn(Team.White), 3, 1);
+        board.Place(new Pawn(Team.White), 4, 1);
+        board.Place(new Pawn(Team.White), 5, 1);
+        board.Place(new Rook(Team.Black), 0, 0);
+
+        Assert.False(board.IsStalemate(Team.White));
+    }
 }

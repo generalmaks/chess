@@ -123,6 +123,24 @@ public class ChessBoard
         return IsSquareAttacked(kingCoord, opponent);
     }
 
+    public bool IsCheckmate(Team team) => IsInCheck(team) && !HasAnyLegalMoves(team);
+
+    public bool IsStalemate(Team team) => !IsInCheck(team) && !HasAnyLegalMoves(team);
+
+    private bool HasAnyLegalMoves(Team team)
+    {
+        foreach (var column in Spots)
+        {
+            foreach (var spot in column)
+            {
+                if (spot.Piece is { } piece && piece.Team == team && GetLegalMoves(spot.Coord).Length > 0)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     // Pseudo-legal moves filtered down to ones that don't leave the mover's own
     // king in check. This is also what stops a player from making any move at all
     // while already in check unless the move resolves it.
