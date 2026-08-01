@@ -39,7 +39,9 @@ public class ChessBoard
         PlaceKing(7, Team.Black);
     }
 
-    public void MakeMove(PieceMove pieceMove, Team team)
+    private static readonly char[] PromotionPieces = ['Q', 'R', 'B', 'N'];
+
+    public void MakeMove(PieceMove pieceMove, Team team, char? promotionPieceCode = null)
     {
         var startSpot = GetSpot(pieceMove.From);
         var endSpot = GetSpot(pieceMove.To);
@@ -55,6 +57,14 @@ public class ChessBoard
         var movingPiece = startSpot.Piece;
         switch (movingPiece)
         {
+            case Pawn pawn when pieceMove.To.Y is 0 or 7:
+                var promoteTo = promotionPieceCode ?? 'Q';
+                if (!PromotionPieces.Contains(promoteTo))
+                    throw new InvalidPromotionPieceException();
+
+                movingPiece = PieceFactory.CreatePiece(promoteTo, team);
+                MoveHistory.Add(new MoveRecord(pawn.PieceCode, pieceMove, false, promoteTo));
+                break;
             case Pawn pawn:
                 pawn.HasMadeFirstMove = true;
                 MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));

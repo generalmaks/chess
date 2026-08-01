@@ -9,3 +9,5 @@ public class MovingOverOwnPiecesException() : IllegalMoveException("Can't move p
 public class NoPossibleMovesException() : IllegalMoveException("Move is not legal for this piece");
 
 public class NonExistingPieceException() : IllegalMoveException("Can't move non-existent piece");
+
+public class InvalidPromotionPieceException() : IllegalMoveException("Promotion piece must be a Queen, Rook, Bishop, or Knight");

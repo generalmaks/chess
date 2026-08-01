@@ -70,7 +70,11 @@ void HandleSelect()
 
     try
     {
-        board.MakeMove(new PieceMove(from, cursor), playerMoving);
+        char? promotion = null;
+        if (board.Spots[from.X][from.Y].Piece is Pawn && cursor.Y is 0 or 7)
+            promotion = PromptPromotionChoice();
+
+        board.MakeMove(new PieceMove(from, cursor), playerMoving, promotion);
         playerMoving = playerMoving == Team.White ? Team.Black : Team.White;
         statusMessage = string.Empty;
     }
@@ -82,6 +86,22 @@ void HandleSelect()
     {
         selected = null;
         legalMoves = [];
+    }
+}
+
+char PromptPromotionChoice()
+{
+    Render();
+    Console.WriteLine("Promote to: (Q)ueen, (R)ook, (B)ishop, (N)ight");
+    while (true)
+    {
+        switch (Console.ReadKey(intercept: true).Key)
+        {
+            case ConsoleKey.Q: return 'Q';
+            case ConsoleKey.R: return 'R';
+            case ConsoleKey.B: return 'B';
+            case ConsoleKey.N: return 'N';
+        }
     }
 }
 
@@ -123,7 +143,8 @@ string FormatMove(MoveRecord record)
     if (record.IsCastling)
         return record.Move.To.X > record.Move.From.X ? "O-O" : "O-O-O";
 
-    return $"{record.PieceCode}{record.Move.From.X}{record.Move.From.Y}->{record.PieceCode}{record.Move.To.X}{record.Move.To.Y}";
+    var suffix = record.PromotedTo is { } promotedTo ? $"={promotedTo}" : string.Empty;
+    return $"{record.PieceCode}{record.Move.From.X}{record.Move.From.Y}->{record.PieceCode}{record.Move.To.X}{record.Move.To.Y}{suffix}";
 }
 
 void DrawSquare(int x, int y)
