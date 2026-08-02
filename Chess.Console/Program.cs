@@ -1,19 +1,18 @@
+using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
 
-var board = new ChessBoard();
-var playerMoving = Team.White;
+var session = new ChessGameSession();
 var cursor = new PieceCord(4, 1);
 PieceCord? selected = null;
 PieceMove[] legalMoves = [];
 var statusMessage = string.Empty;
-var gameOver = false;
 
 while (true)
 {
     Render();
 
-    if (gameOver)
+    if (session.Result != GameResult.Ongoing)
     {
         if (Console.ReadKey(intercept: true).Key == ConsoleKey.Q)
             return;
@@ -56,15 +55,15 @@ void HandleSelect()
 {
     if (selected is not { } from)
     {
-        var piece = board.Spots[cursor.X][cursor.Y].Piece;
-        if (piece is null || piece.Team != playerMoving)
+        var piece = session.Board.Spots[cursor.X][cursor.Y].Piece;
+        if (piece is null || piece.Team != session.CurrentTurn)
         {
             statusMessage = "Select one of your own pieces.";
             return;
         }
 
         selected = cursor;
-        legalMoves = board.GetLegalMoves(cursor);
+        legalMoves = session.Board.GetLegalMoves(cursor);
         statusMessage = string.Empty;
         return;
     }
@@ -79,24 +78,19 @@ void HandleSelect()
     try
     {
         char? promotion = null;
-        if (board.Spots[from.X][from.Y].Piece is Pawn && cursor.Y is 0 or 7)
+        if (session.Board.Spots[from.X][from.Y].Piece is Pawn && cursor.Y is 0 or 7 &&
+            legalMoves.Any(m => m.To == cursor))
             promotion = PromptPromotionChoice();
 
-        board.MakeMove(new PieceMove(from, cursor), playerMoving, promotion);
-        playerMoving = playerMoving == Team.White ? Team.Black : Team.White;
-        statusMessage = string.Empty;
-
-        if (board.IsCheckmate(playerMoving))
+        session.MakeMove(new PieceMove(from, cursor), promotion);
+        statusMessage = session.Result switch
         {
-            var winner = playerMoving == Team.White ? Team.Black : Team.White;
-            statusMessage = $"Checkmate! {winner} wins. Press Q to quit.";
-            gameOver = true;
-        }
-        else if (board.IsStalemate(playerMoving))
-        {
-            statusMessage = "Stalemate! The game is a draw. Press Q to quit.";
-            gameOver = true;
-        }
+            GameResult.WhiteWon => "Checkmate! White wins. Press Q to quit.",
+            GameResult.BlackWon => "Checkmate! Black wins. Press Q to quit.",
+            GameResult.StalemateDraw => "Stalemate! The game is a draw. Press Q to quit.",
+            GameResult.FiftyMoveRuleDraw => "Draw by the fifty-move rule. Press Q to quit.",
+            _ => string.Empty
+        };
     }
     catch (IllegalMoveException ex)
     {
@@ -129,18 +123,21 @@ void Render()
 {
     Console.Clear();
 
-    foreach (var record in board.MoveHistory)
+    foreach (var record in session.Board.MoveHistory)
     {
         Console.WriteLine(FormatMove(record));
     }
 
     Console.Write("-----\n");
+    Console.WriteLine($"Captured by White: {FormatCaptured(session.PiecesCapturedByWhite)}");
+    Console.WriteLine($"Captured by Black: {FormatCaptured(session.PiecesCapturedByBlack)}");
+    Console.Write("-----\n");
     PrintFileHeader();
 
-    for (var y = 0; y < board.Spots.Length; y++)
+    for (var y = 0; y < session.Board.Spots.Length; y++)
     {
         Console.Write($"{y} ");
-        for (var x = 0; x < board.Spots.Length; x++)
+        for (var x = 0; x < session.Board.Spots.Length; x++)
         {
             DrawSquare(x, y);
         }
@@ -153,11 +150,17 @@ void Render()
     PrintFileHeader();
     Console.Write("-----\n");
 
-    Console.WriteLine($"{playerMoving}: arrows to move, Enter to select/move, Esc to cancel, Q to quit.");
-    if (!gameOver && board.IsInCheck(playerMoving))
-        Console.WriteLine($"{playerMoving} is in check!");
+    Console.WriteLine($"{session.CurrentTurn}: arrows to move, Enter to select/move, Esc to cancel, Q to quit.");
+    if (session.Result == GameResult.Ongoing && session.Board.IsInCheck(session.CurrentTurn))
+        Console.WriteLine($"{session.CurrentTurn} is in check!");
     if (!string.IsNullOrEmpty(statusMessage))
         Console.WriteLine(statusMessage);
+}
+
+string FormatCaptured(IEnumerable<Piece> pieces)
+{
+    var codes = pieces.Select(p => p.PieceCode).ToArray();
+    return codes.Length == 0 ? "-" : string.Join(' ', codes);
 }
 
 string FormatMove(MoveRecord record)
@@ -183,7 +186,7 @@ void DrawSquare(int x, int y)
         : isLegalTarget ? ConsoleColor.Green
         : ConsoleColor.Gray;
 
-    var piece = board.Spots[x][y].Piece;
+    var piece = session.Board.Spots[x][y].Piece;
     if (piece != null)
     {
         Console.ForegroundColor = piece.Team == Team.White ? ConsoleColor.White : ConsoleColor.Black;
@@ -199,7 +202,7 @@ void DrawSquare(int x, int y)
 void PrintFileHeader()
 {
     Console.Write("  ");
-    for (var file = 0; file < board.Spots.Length; file++)
+    for (var file = 0; file < session.Board.Spots.Length; file++)
     {
         Console.Write(file);
     }
