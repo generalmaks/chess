@@ -113,4 +113,56 @@ public class ChessGameSessionTests
         Assert.False(session.Board.Spots[4][4].IsSpotOccupied);
         Assert.Empty(session.PiecesCapturedByBlack);
     }
+
+    [Fact]
+    public void Resign_WhiteResigns_BlackWinsAndBlocksFurtherMoves()
+    {
+        var session = new ChessGameSession();
+
+        session.Resign(Team.White);
+
+        Assert.Equal(GameResult.BlackWon, session.Result);
+        Assert.Throws<GameAlreadyEndedException>(() =>
+            session.MakeMove(new PieceMove(new PieceCord(4, 6), new PieceCord(4, 5))));
+    }
+
+    [Fact]
+    public void Resign_BlackResigns_WhiteWins()
+    {
+        var session = new ChessGameSession();
+
+        session.Resign(Team.Black);
+
+        Assert.Equal(GameResult.WhiteWon, session.Result);
+    }
+
+    [Fact]
+    public void Resign_GameAlreadyEnded_ThrowsGameAlreadyEndedException()
+    {
+        var session = new ChessGameSession();
+        session.Resign(Team.White);
+
+        Assert.Throws<GameAlreadyEndedException>(() => session.Resign(Team.Black));
+    }
+
+    [Fact]
+    public void AgreeToDraw_SetsResultToDrawByAgreementAndBlocksFurtherMoves()
+    {
+        var session = new ChessGameSession();
+
+        session.AgreeToDraw();
+
+        Assert.Equal(GameResult.DrawByAgreement, session.Result);
+        Assert.Throws<GameAlreadyEndedException>(() =>
+            session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3))));
+    }
+
+    [Fact]
+    public void AgreeToDraw_GameAlreadyEnded_ThrowsGameAlreadyEndedException()
+    {
+        var session = new ChessGameSession();
+        session.AgreeToDraw();
+
+        Assert.Throws<GameAlreadyEndedException>(session.AgreeToDraw);
+    }
 }

@@ -43,6 +43,12 @@ while (true)
             legalMoves = [];
             statusMessage = string.Empty;
             break;
+        case ConsoleKey.R:
+            HandleResign();
+            break;
+        case ConsoleKey.D:
+            HandleDrawOffer();
+            break;
         case ConsoleKey.Q:
             return;
     }
@@ -83,14 +89,7 @@ void HandleSelect()
             promotion = PromptPromotionChoice();
 
         session.MakeMove(new PieceMove(from, cursor), promotion);
-        statusMessage = session.Result switch
-        {
-            GameResult.WhiteWon => "Checkmate! White wins. Press Q to quit.",
-            GameResult.BlackWon => "Checkmate! Black wins. Press Q to quit.",
-            GameResult.StalemateDraw => "Stalemate! The game is a draw. Press Q to quit.",
-            GameResult.FiftyMoveRuleDraw => "Draw by the fifty-move rule. Press Q to quit.",
-            _ => string.Empty
-        };
+        statusMessage = FormatResultMessage(session.Result);
     }
     catch (IllegalMoveException ex)
     {
@@ -101,6 +100,52 @@ void HandleSelect()
         selected = null;
         legalMoves = [];
     }
+}
+
+void HandleResign()
+{
+    if (!ConfirmAction($"{session.CurrentTurn} resigns - press Y to confirm, any other key to cancel."))
+        return;
+
+    session.Resign(session.CurrentTurn);
+    statusMessage = FormatResultMessage(session.Result);
+    selected = null;
+    legalMoves = [];
+}
+
+void HandleDrawOffer()
+{
+    if (!ConfirmAction("Agree to a draw? Press Y to confirm, any other key to cancel."))
+        return;
+
+    session.AgreeToDraw();
+    statusMessage = FormatResultMessage(session.Result);
+    selected = null;
+    legalMoves = [];
+}
+
+bool ConfirmAction(string prompt)
+{
+    Render();
+    Console.WriteLine(prompt);
+    return Console.ReadKey(intercept: true).Key == ConsoleKey.Y;
+}
+
+string FormatResultMessage(GameResult result) => result switch
+{
+    GameResult.WhiteWon => FormatWinMessage(Team.White),
+    GameResult.BlackWon => FormatWinMessage(Team.Black),
+    GameResult.StalemateDraw => "Stalemate! The game is a draw. Press Q to quit.",
+    GameResult.FiftyMoveRuleDraw => "Draw by the fifty-move rule. Press Q to quit.",
+    GameResult.DrawByAgreement => "Draw by agreement. Press Q to quit.",
+    _ => string.Empty
+};
+
+string FormatWinMessage(Team winner)
+{
+    var loser = winner == Team.White ? Team.Black : Team.White;
+    var reason = session.Board.IsCheckmate(loser) ? "Checkmate! " : $"{loser} resigns. ";
+    return $"{reason}{winner} wins. Press Q to quit.";
 }
 
 char PromptPromotionChoice()
@@ -150,7 +195,7 @@ void Render()
     PrintFileHeader();
     Console.Write("-----\n");
 
-    Console.WriteLine($"{session.CurrentTurn}: arrows to move, Enter to select/move, Esc to cancel, Q to quit.");
+    Console.WriteLine($"{session.CurrentTurn}: arrows to move, Enter to select/move, Esc to cancel, R to resign, D to draw, Q to quit.");
     if (session.Result == GameResult.Ongoing && session.Board.IsInCheck(session.CurrentTurn))
         Console.WriteLine($"{session.CurrentTurn} is in check!");
     if (!string.IsNullOrEmpty(statusMessage))

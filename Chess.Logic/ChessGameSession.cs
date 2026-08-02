@@ -47,6 +47,22 @@ public class ChessGameSession
         UpdateResult();
     }
 
+    public void Resign(Team resigningTeam)
+    {
+        if (Result != GameResult.Ongoing)
+            throw new GameAlreadyEndedException();
+
+        Result = resigningTeam == Team.White ? GameResult.BlackWon : GameResult.WhiteWon;
+    }
+
+    public void AgreeToDraw()
+    {
+        if (Result != GameResult.Ongoing)
+            throw new GameAlreadyEndedException();
+
+        Result = GameResult.DrawByAgreement;
+    }
+
     private void RecordCapture(Piece captured)
     {
         var capturedBy = captured.Team == Team.White ? _piecesCapturedByBlack : _piecesCapturedByWhite;

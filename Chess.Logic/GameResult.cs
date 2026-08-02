@@ -6,5 +6,6 @@ public enum GameResult
     WhiteWon,
     BlackWon,
     StalemateDraw,
-    FiftyMoveRuleDraw
+    FiftyMoveRuleDraw,
+    DrawByAgreement
 }
