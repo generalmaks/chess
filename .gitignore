@@ -3,3 +3,5 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+Chess.Api/appsettings.json
+Chess.Api/appsettings.Development.json
