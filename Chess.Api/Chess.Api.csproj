@@ -8,11 +8,18 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.18" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+        <!-- Pinned to match Chess.Dal: Npgsql.EntityFrameworkCore.PostgreSQL 9.0.4 only floors this at 9.0.1. -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Chess.Logic\Chess.Logic.csproj" />
+        <ProjectReference Include="..\Chess.Dal\Chess.Dal.csproj" />
     </ItemGroup>
 
 </Project>

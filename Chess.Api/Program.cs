@@ -1,6 +1,8 @@
 using Chess.Api.Contracts;
 using Chess.Api.Games;
 using Chess.Api.Hubs;
+using Chess.Dal;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<GameStore>();
+builder.Services.AddDbContext<ChessDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Chess")));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(DevCorsPolicy, policy => policy
