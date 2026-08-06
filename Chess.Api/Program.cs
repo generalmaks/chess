@@ -14,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<GameStore>();
 builder.Services.AddScoped<GameOrchestrator>();
+builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddDbContext<ChessDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Chess")));
 builder.Services.AddCors(options =>

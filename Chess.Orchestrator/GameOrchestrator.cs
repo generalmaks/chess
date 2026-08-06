@@ -8,18 +8,20 @@ namespace Chess.Orchestrator;
 
 public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 
-public class GameOrchestrator(GameStore store, ChessDbContext db)
+// Coordinates the in-memory GameStore (live sessions, one per active game) with
+// Chess.Dal (durable game/move history). Transport layers (e.g. the SignalR hub)
+// should depend on this instead of touching GameStore or IGameRepository directly.
+public class GameOrchestrator(GameStore store, IGameRepository repository)
 {
     public async Task<GameRoom> CreateGameAsync(CancellationToken ct = default)
     {
         var room = store.CreateGame();
 
-        db.Games.Add(new GameEntity
+        await repository.AddGameAsync(new GameEntity
         {
             Id = Guid.Parse(room.Id),
             CreatedAtUtc = DateTime.UtcNow,
-        });
-        await db.SaveChangesAsync(ct);
+        }, ct);
 
         return room;
     }
@@ -51,7 +53,7 @@ public class GameOrchestrator(GameStore store, ChessDbContext db)
         var (room, team) = GetActiveConnection(connectionId);
 
         room.Session.Resign(team);
-        await PersistGameEndAsync(room, ct);
+        await EndGameAsync(room, ct);
 
         return room;
     }
@@ -75,7 +77,7 @@ public class GameOrchestrator(GameStore store, ChessDbContext db)
             return new DrawResponseResult(room, Accepted: false);
 
         room.Session.AgreeToDraw();
-        await PersistGameEndAsync(room, ct);
+        await EndGameAsync(room, ct);
 
         return new DrawResponseResult(room, Accepted: true);
     }
@@ -93,7 +95,7 @@ public class GameOrchestrator(GameStore store, ChessDbContext db)
     {
         var lastMove = room.Session.Board.MoveHistory[^1];
 
-        db.Moves.Add(new MoveEntity
+        await repository.AddMoveAsync(new MoveEntity
         {
             GameId = Guid.Parse(room.Id),
             Ply = room.Session.Board.MoveHistory.Count - 1,
@@ -107,25 +109,12 @@ public class GameOrchestrator(GameStore store, ChessDbContext db)
             IsCastling = lastMove.IsCastling,
             IsEnPassant = lastMove.IsEnPassant,
             PlayedAtUtc = DateTime.UtcNow,
-        });
+        }, ct);
 
         if (room.Session.Result != GameResult.Ongoing)
-            await MarkGameEndedAsync(room, ct);
-        else
-            await db.SaveChangesAsync(ct);
+            await EndGameAsync(room, ct);
     }
 
-    private async Task PersistGameEndAsync(GameRoom room, CancellationToken ct) => await MarkGameEndedAsync(room, ct);
-
-    private async Task MarkGameEndedAsync(GameRoom room, CancellationToken ct)
-    {
-        var gameId = Guid.Parse(room.Id);
-        var game = await db.Games.FindAsync([gameId], ct)
-            ?? throw new InvalidOperationException($"Game {gameId} is missing from the database.");
-
-        game.Result = room.Session.Result;
-        game.EndedAtUtc = DateTime.UtcNow;
-
-        await db.SaveChangesAsync(ct);
-    }
+    private Task EndGameAsync(GameRoom room, CancellationToken ct) =>
+        repository.EndGameAsync(Guid.Parse(room.Id), room.Session.Result, DateTime.UtcNow, ct);
 }
