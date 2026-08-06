@@ -1,23 +1,24 @@
 using Chess.Api.Contracts;
-using Chess.Api.Games;
 using Chess.Api.Hubs;
 using Chess.Dal;
+using Chess.Orchestrator;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string DevCorsPolicy = "DevCors";
+const string devCorsPolicy = "DevCors";
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<GameStore>();
+builder.Services.AddScoped<GameOrchestrator>();
 builder.Services.AddDbContext<ChessDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Chess")));
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(DevCorsPolicy, policy => policy
+    options.AddPolicy(devCorsPolicy, policy => policy
         .WithOrigins("http://localhost:3000", "https://localhost:3000")
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -33,13 +34,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(DevCorsPolicy);
+app.UseCors(devCorsPolicy);
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapPost("/games", (GameStore store) =>
+app.MapPost("/games", async (GameOrchestrator orchestrator) =>
     {
-        var room = store.CreateGame();
+        var room = await orchestrator.CreateGameAsync();
         return new CreateGameResponse(room.Id, room.WhiteToken, room.BlackToken);
     })
     .WithName("CreateGame");

@@ -1,7 +1,7 @@
 using Chess.Logic;
 using Chess.Logic.Pieces.Chess;
 
-namespace Chess.Api.Games;
+namespace Chess.Orchestrator;
 
 public class GameRoom(string id, string whiteToken, string blackToken)
 {

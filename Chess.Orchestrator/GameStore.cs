@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Chess.Logic.Pieces.Chess;
 
-namespace Chess.Api.Games;
+namespace Chess.Orchestrator;
 
 public record PlayerConnection(string GameId, Team Team);
 

@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Api", "Chess.Api\Ches
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Dal", "Chess.Dal\Chess.Dal.csproj", "{A3D3D435-0A13-4683-8A04-99F465F73DAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Orchestrator", "Chess.Orchestrator\Chess.Orchestrator.csproj", "{FE0C6155-A23E-44F2-9D0E-717302A2B2DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{A3D3D435-0A13-4683-8A04-99F465F73DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3D3D435-0A13-4683-8A04-99F465F73DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3D3D435-0A13-4683-8A04-99F465F73DAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE0C6155-A23E-44F2-9D0E-717302A2B2DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE0C6155-A23E-44F2-9D0E-717302A2B2DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE0C6155-A23E-44F2-9D0E-717302A2B2DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE0C6155-A23E-44F2-9D0E-717302A2B2DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
