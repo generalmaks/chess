@@ -117,7 +117,7 @@ public class GameOrchestratorTests
         var move = new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)); // e2-e4
         var updatedRoom = await orchestrator.MakeMoveAsync("white-conn", move, null);
 
-        Assert.Equal(Team.Black, updatedRoom.Session.CurrentTurn);
+        Assert.Equal(Team.Black, updatedRoom.State.CurrentTurn);
 
         var moveEntity = Assert.Single(repo.AddedMoves);
         Assert.Equal(0, moveEntity.Ply);
@@ -167,7 +167,7 @@ public class GameOrchestratorTests
         await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(6, 1), new PieceCord(6, 3)), null);
         var finalRoom = await orchestrator.MakeMoveAsync("black-conn", new PieceMove(new PieceCord(3, 7), new PieceCord(7, 3)), null);
 
-        Assert.Equal(GameResult.BlackWon, finalRoom.Session.Result);
+        Assert.Equal(GameResult.BlackWon, finalRoom.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.BlackWon, gameEntity.Result);
@@ -201,7 +201,7 @@ public class GameOrchestratorTests
 
         var updatedRoom = await orchestrator.ResignAsync("white-conn");
 
-        Assert.Equal(GameResult.BlackWon, updatedRoom.Session.Result);
+        Assert.Equal(GameResult.BlackWon, updatedRoom.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.BlackWon, gameEntity.Result);
@@ -272,7 +272,7 @@ public class GameOrchestratorTests
 
         Assert.False(result.Accepted);
         Assert.Null(result.Room.DrawOfferedBy);
-        Assert.Equal(GameResult.Ongoing, result.Room.Session.Result);
+        Assert.Equal(GameResult.Ongoing, result.Room.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.Ongoing, gameEntity.Result);
@@ -293,7 +293,7 @@ public class GameOrchestratorTests
 
         Assert.True(result.Accepted);
         Assert.Null(result.Room.DrawOfferedBy);
-        Assert.Equal(GameResult.DrawByAgreement, result.Room.Session.Result);
+        Assert.Equal(GameResult.DrawByAgreement, result.Room.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.DrawByAgreement, gameEntity.Result);

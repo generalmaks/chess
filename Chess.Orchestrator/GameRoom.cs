@@ -6,7 +6,13 @@ namespace Chess.Orchestrator;
 public class GameRoom(string id, string whiteToken, string blackToken)
 {
     public string Id { get; } = id;
-    public ChessGameSession Session { get; } = new();
+
+    // Internal: GameOrchestrator is the only thing allowed to mutate a session (turn
+    // checks, draw-offer rules, ...). Outside Chess.Orchestrator, use State instead.
+    internal ChessGameSession Session { get; } = new();
+
+    public GameStateSnapshot State => GameStateSnapshot.Capture(Session);
+
     public string WhiteToken { get; } = whiteToken;
     public string BlackToken { get; } = blackToken;
 
