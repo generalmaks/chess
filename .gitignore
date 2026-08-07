@@ -1,3 +1,5 @@
+.idea/
+*.DotSettings.user
 bin/
 obj/
 /packages/
