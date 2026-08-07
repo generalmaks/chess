@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Chess API test client</title>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; }
+  fieldset { margin-bottom: 1rem; }
+  label { display: inline-block; min-width: 6rem; }
+  input { margin: 0.2rem 0; }
+  #board { border-collapse: collapse; margin: 1rem 0; }
+  #board td { width: 2.2rem; height: 2.2rem; text-align: center; font-size: 1.1rem; border: 1px solid #999; }
+  #board td.light { background: #eee; }
+  #board td.dark { background: #bbb; }
+  #log { height: 10rem; overflow-y: auto; background: #111; color: #0f0; font-family: monospace; padding: 0.5rem; font-size: 0.8rem; }
+  button { margin-right: 0.4rem; }
+</style>
+</head>
+<body>
+<h1>Chess API test client</h1>
+<p>Open this page in two tabs (or two browsers) — one per player — to play a full game.</p>
+
+<fieldset>
+  <legend>1. Create a game</legend>
+  <button id="createGame">Create game</button>
+  <div id="createResult"></div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Join</legend>
+  <label>Game ID</label><input id="gameId" size="34"/><br/>
+  <label>Token</label><input id="token" size="34"/><br/>
+  <button id="join">Connect &amp; join</button>
+  <span id="joinResult"></span>
+</fieldset>
+
+<fieldset>
+  <legend>3. Play</legend>
+  <p>Turn: <b id="turn">-</b> | Result: <b id="result">-</b></p>
+  <table id="board"></table>
+  <div>
+    <label>From (e.g. e2)</label><input id="from" size="4"/>
+    <label>To (e.g. e4)</label><input id="to" size="4"/>
+    <select id="promotion">
+      <option value="">Queen (default)</option>
+      <option value="R">Rook</option>
+      <option value="B">Bishop</option>
+      <option value="N">Knight</option>
+    </select>
+    <button id="move">Move</button>
+  </div>
+  <div style="margin-top: 0.5rem;">
+    <button id="resign">Resign</button>
+    <button id="offerDraw">Offer draw</button>
+    <button id="acceptDraw">Accept draw</button>
+    <button id="declineDraw">Decline draw</button>
+  </div>
+</fieldset>
+
+<h3>Log</h3>
+<div id="log"></div>
+
+<script>
+const log = (msg) => {
+  const el = document.getElementById('log');
+  el.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+  el.scrollTop = el.scrollHeight;
+};
+
+document.getElementById('createGame').addEventListener('click', async () => {
+  const res = await fetch('/games', { method: 'POST' });
+  const data = await res.json();
+  document.getElementById('createResult').innerHTML =
+    `Game: <code>${data.gameId}</code><br/>White token: <code>${data.whiteToken}</code><br/>Black token: <code>${data.blackToken}</code>`;
+  document.getElementById('gameId').value = data.gameId;
+  log(`Created game ${data.gameId}`);
+});
+
+let connection = null;
+
+function squareToCoord(sq) {
+  const file = sq.trim().toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
+  const rank = parseInt(sq.trim()[1], 10) - 1;
+  return { x: file, y: rank };
+}
+
+function renderBoard(state) {
+  document.getElementById('turn').textContent = state.currentTurn;
+  document.getElementById('result').textContent = state.result;
+  const table = document.getElementById('board');
+  table.innerHTML = '';
+  for (let y = 7; y >= 0; y--) {
+    const row = document.createElement('tr');
+    for (let x = 0; x < 8; x++) {
+      const cell = document.createElement('td');
+      cell.className = (x + y) % 2 === 0 ? 'dark' : 'light';
+      cell.textContent = state.board[x][y] ?? '';
+      row.appendChild(cell);
+    }
+    table.appendChild(row);
+  }
+}
+
+document.getElementById('join').addEventListener('click', async () => {
+  const gameId = document.getElementById('gameId').value.trim();
+  const token = document.getElementById('token').value.trim();
+
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl('/hubs/chess')
+    .withAutomaticReconnect()
+    .build();
+
+  connection.on('StateUpdated', (state) => { log('State updated'); renderBoard(state); });
+  connection.on('PlayerJoined', (team) => log(`${team} joined`));
+  connection.on('DrawOffered', (team) => log(`${team} offered a draw`));
+  connection.on('DrawDeclined', () => log('Draw declined'));
+
+  try {
+    await connection.start();
+    const joined = await connection.invoke('JoinGame', gameId, token);
+    document.getElementById('joinResult').textContent = `Joined as ${joined.team}`;
+    log(`Joined as ${joined.team}`);
+    renderBoard(joined.state);
+  } catch (err) {
+    log(`Join failed: ${err.message}`);
+  }
+});
+
+async function invokeHub(method, ...args) {
+  if (!connection) { log('Join a game first.'); return; }
+  try {
+    await connection.invoke(method, ...args);
+  } catch (err) {
+    log(`${method} failed: ${err.message}`);
+  }
+}
+
+document.getElementById('move').addEventListener('click', () => {
+  const from = squareToCoord(document.getElementById('from').value);
+  const to = squareToCoord(document.getElementById('to').value);
+  const promotion = document.getElementById('promotion').value || null;
+  invokeHub('MakeMove', { fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, promotion });
+});
+
+document.getElementById('resign').addEventListener('click', () => invokeHub('Resign'));
+document.getElementById('offerDraw').addEventListener('click', () => invokeHub('OfferDraw'));
+document.getElementById('acceptDraw').addEventListener('click', () => invokeHub('RespondToDraw', true));
+document.getElementById('declineDraw').addEventListener('click', () => invokeHub('RespondToDraw', false));
+</script>
+</body>
+</html>
