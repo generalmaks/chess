@@ -1,6 +1,6 @@
 namespace Chess.Api.Contracts;
 
-public record CreateGameResponse(string GameId, string WhiteToken, string BlackToken);
+public record CreateGameResponse(string GameId, string Team);
 
 public record JoinGameResponse(string Team, GameStateDto State);
 

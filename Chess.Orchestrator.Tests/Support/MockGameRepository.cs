@@ -1,6 +1,7 @@
 using Chess.Dal;
 using Chess.Dal.Entities;
 using Chess.Logic;
+using Chess.Logic.Pieces.Chess;
 using Moq;
 
 namespace Chess.Orchestrator.Tests.Support;
@@ -23,6 +24,15 @@ public class MockGameRepository
 
         Mock.Setup(r => r.AddMoveAsync(It.IsAny<MoveEntity>(), It.IsAny<CancellationToken>()))
             .Callback<MoveEntity, CancellationToken>((move, _) => AddedMoves.Add(move))
+            .Returns(Task.CompletedTask);
+
+        Mock.Setup(r => r.AssignPlayerAsync(It.IsAny<Guid>(), It.IsAny<Team>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Callback<Guid, Team, Guid, CancellationToken>((gameId, team, playerId, _) =>
+            {
+                var game = AddedGames.Single(g => g.Id == gameId);
+                if (team == Team.White) game.WhitePlayerId = playerId;
+                else game.BlackPlayerId = playerId;
+            })
             .Returns(Task.CompletedTask);
 
         Mock.Setup(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))

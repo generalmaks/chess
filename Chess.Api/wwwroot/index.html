@@ -22,7 +22,22 @@
 <p>Open this page in two tabs (or two browsers) — one per player — to play a full game.</p>
 
 <fieldset>
+  <legend>0. Register / log in</legend>
+  <label>Username</label><input id="username" size="20"/><br/>
+  <label>Password</label><input id="password" type="password" size="20"/><br/>
+  <button id="register">Register</button>
+  <button id="login">Log in</button>
+  <span id="authResult"></span>
+</fieldset>
+
+<fieldset>
   <legend>1. Create a game</legend>
+  <label>Color</label>
+  <select id="color">
+    <option value="">Random</option>
+    <option value="white">White</option>
+    <option value="black">Black</option>
+  </select>
   <button id="createGame">Create game</button>
   <div id="createResult"></div>
 </fieldset>
@@ -30,7 +45,6 @@
 <fieldset>
   <legend>2. Join</legend>
   <label>Game ID</label><input id="gameId" size="34"/><br/>
-  <label>Token</label><input id="token" size="34"/><br/>
   <button id="join">Connect &amp; join</button>
   <span id="joinResult"></span>
 </fieldset>
@@ -68,13 +82,45 @@ const log = (msg) => {
   el.scrollTop = el.scrollHeight;
 };
 
-document.getElementById('createGame').addEventListener('click', async () => {
-  const res = await fetch('/games', { method: 'POST' });
+let authToken = null;
+
+async function authenticate(path) {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  const res = await fetch(`/auth/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
   const data = await res.json();
-  document.getElementById('createResult').innerHTML =
-    `Game: <code>${data.gameId}</code><br/>White token: <code>${data.whiteToken}</code><br/>Black token: <code>${data.blackToken}</code>`;
+
+  if (!res.ok) {
+    document.getElementById('authResult').textContent = data.error ?? 'Auth failed';
+    log(`${path} failed`);
+    return;
+  }
+
+  authToken = data.token;
+  document.getElementById('authResult').textContent = `Logged in as ${data.username}`;
+  log(`Logged in as ${data.username}`);
+}
+
+document.getElementById('register').addEventListener('click', () => authenticate('register'));
+document.getElementById('login').addEventListener('click', () => authenticate('login'));
+
+document.getElementById('createGame').addEventListener('click', async () => {
+  if (!authToken) { log('Log in first.'); return; }
+
+  const color = document.getElementById('color').value;
+  const res = await fetch(`/games${color ? `?color=${color}` : ''}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const data = await res.json();
+  document.getElementById('createResult').innerHTML = `Game: <code>${data.gameId}</code><br/>You are: <b>${data.team}</b>`;
   document.getElementById('gameId').value = data.gameId;
-  log(`Created game ${data.gameId}`);
+  log(`Created game ${data.gameId} as ${data.team}`);
 });
 
 let connection = null;
@@ -103,11 +149,12 @@ function renderBoard(state) {
 }
 
 document.getElementById('join').addEventListener('click', async () => {
+  if (!authToken) { log('Log in first.'); return; }
+
   const gameId = document.getElementById('gameId').value.trim();
-  const token = document.getElementById('token').value.trim();
 
   connection = new signalR.HubConnectionBuilder()
-    .withUrl('/hubs/chess')
+    .withUrl('/hubs/chess', { accessTokenFactory: () => authToken })
     .withAutomaticReconnect()
     .build();
 
@@ -118,7 +165,7 @@ document.getElementById('join').addEventListener('click', async () => {
 
   try {
     await connection.start();
-    const joined = await connection.invoke('JoinGame', gameId, token);
+    const joined = await connection.invoke('JoinGame', gameId);
     document.getElementById('joinResult').textContent = `Joined as ${joined.team}`;
     log(`Joined as ${joined.team}`);
     renderBoard(joined.state);

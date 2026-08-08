@@ -1,16 +1,20 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Chess.Api.Contracts;
 using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Orchestrator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Chess.Api.Hubs;
 
+[Authorize]
 public class ChessHub(GameOrchestrator orchestrator) : Hub
 {
-    public async Task<JoinGameResponse> JoinGame(string gameId, string token)
+    public async Task<JoinGameResponse> JoinGame(string gameId)
     {
-        var (room, team) = Guarded(() => orchestrator.Join(Context.ConnectionId, gameId, token));
+        var (room, team) = await GuardedAsync(() => orchestrator.JoinAsync(Context.ConnectionId, gameId, GetPlayerId()));
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(gameId));
         await Clients.OthersInGroup(GroupName(gameId)).SendAsync("PlayerJoined", team.ToString());
@@ -58,11 +62,10 @@ public class ChessHub(GameOrchestrator orchestrator) : Hub
         return base.OnDisconnectedAsync(exception);
     }
 
-    private static string GroupName(string gameId) => $"game-{gameId}";
+    private Guid GetPlayerId() => Guid.Parse(Context.User!.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
-    // Domain/orchestration exceptions carry player-facing messages (illegal move, game
-    // already over, unknown game, ...); everything else is a real bug and should surface
-    // as a 500/crash, not get swallowed into a HubException.
+    private static string GroupName(string gameId) => $"game-{gameId}";
+    
     private static T Guarded<T>(Func<T> action)
     {
         try

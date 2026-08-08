@@ -10,10 +10,11 @@ public class GameStore
     private readonly ConcurrentDictionary<string, GameRoom> _games = new();
     private readonly ConcurrentDictionary<string, PlayerConnection> _connections = new();
 
-    public GameRoom CreateGame()
+    public GameRoom CreateGame(Guid creatorPlayerId, Team creatorTeam)
     {
         var id = Guid.NewGuid().ToString("N");
-        var room = new GameRoom(id, Guid.NewGuid().ToString("N"), Guid.NewGuid().ToString("N"));
+        var room = new GameRoom(id);
+        room.SeatCreator(creatorPlayerId, creatorTeam);
         _games[id] = room;
         return room;
     }

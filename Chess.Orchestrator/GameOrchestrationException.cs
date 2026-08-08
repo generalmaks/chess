@@ -1,12 +1,10 @@
 namespace Chess.Orchestrator;
 
-// Base for orchestration failures that are player-facing (bad game id, wrong turn, ...)
-// rather than bugs, so callers can translate them into a transport-appropriate error.
 public abstract class GameOrchestrationException(string message) : Exception(message);
 
 public class GameNotFoundException() : GameOrchestrationException("Game not found.");
 
-public class InvalidTokenException() : GameOrchestrationException("Invalid token.");
+public class GameFullException() : GameOrchestrationException("This game already has two players.");
 
 public class NoActiveConnectionException() : GameOrchestrationException("Call JoinGame first.");
 

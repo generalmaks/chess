@@ -13,26 +13,36 @@ public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 // should depend on this instead of touching GameStore or IGameRepository directly.
 public class GameOrchestrator(GameStore store, IGameRepository repository)
 {
-    public async Task<GameRoom> CreateGameAsync(CancellationToken ct = default)
+    // A null preferredTeam means "no preference" - the creator's seat is picked with a coin flip.
+    public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, CancellationToken ct = default)
     {
-        var room = store.CreateGame();
+        var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
+        var room = store.CreateGame(playerId, team);
 
         await repository.AddGameAsync(new GameEntity
         {
             Id = Guid.Parse(room.Id),
             CreatedAtUtc = DateTime.UtcNow,
+            WhitePlayerId = room.WhitePlayerId,
+            BlackPlayerId = room.BlackPlayerId,
         }, ct);
 
         return room;
     }
 
-    public (GameRoom Room, Team Team) Join(string connectionId, string gameId, string token)
+    public async Task<(GameRoom Room, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId) ?? throw new GameNotFoundException();
-        var team = room.TeamForToken(token) ?? throw new InvalidTokenException();
 
-        store.RegisterConnection(connectionId, gameId, team);
-        return (room, team);
+        var team = room.TeamForPlayer(playerId);
+        if (team is null)
+        {
+            team = room.TryClaimOpenSeat(playerId) ?? throw new GameFullException();
+            await repository.AssignPlayerAsync(Guid.Parse(gameId), team.Value, playerId, ct);
+        }
+
+        store.RegisterConnection(connectionId, gameId, team.Value);
+        return (room, team.Value);
     }
 
     public async Task<GameRoom> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
