@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Chess.Api.Hubs;
 
 [Authorize]
-public class ChessHub(GameOrchestrator orchestrator) : Hub
+public class ChessHub(IGameOrchestrator orchestrator) : Hub
 {
     public async Task<JoinGameResponse> JoinGame(string gameId)
     {

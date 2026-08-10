@@ -15,4 +15,8 @@
       <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Chess.Api.Tests" />
+    </ItemGroup>
+
 </Project>

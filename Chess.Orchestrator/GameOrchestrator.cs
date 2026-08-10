@@ -8,12 +8,8 @@ namespace Chess.Orchestrator;
 
 public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 
-// Coordinates the in-memory GameStore (live sessions, one per active game) with
-// Chess.Dal (durable game/move history). Transport layers (e.g. the SignalR hub)
-// should depend on this instead of touching GameStore or IGameRepository directly.
-public class GameOrchestrator(GameStore store, IGameRepository repository)
+public class GameOrchestrator(GameStore store, IGameRepository repository) : IGameOrchestrator
 {
-    // A null preferredTeam means "no preference" - the creator's seat is picked with a coin flip.
     public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, CancellationToken ct = default)
     {
         var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
