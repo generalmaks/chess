@@ -102,8 +102,8 @@ async function authenticate(path) {
   }
 
   authToken = data.token;
-  document.getElementById('authResult').textContent = `Logged in as ${data.username}`;
-  log(`Logged in as ${data.username}`);
+  document.getElementById('authResult').textContent = `Logged in as ${data.username} (Elo: ${data.eloRating})`;
+  log(`Logged in as ${data.username} (Elo: ${data.eloRating})`);
 }
 
 document.getElementById('register').addEventListener('click', () => authenticate('register'));
