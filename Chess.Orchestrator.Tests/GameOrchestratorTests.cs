@@ -1,3 +1,4 @@
+using Chess.Dal.Entities;
 using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
@@ -14,8 +15,21 @@ public class GameOrchestratorTests
     private static (GameOrchestrator Orchestrator, MockGameRepository Repository) CreateOrchestrator()
     {
         var repository = new MockGameRepository();
-        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object);
+        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object, new MockPlayerRepository().Object);
         return (orchestrator, repository);
+    }
+
+    // Seeds both players into the player repository so EndGameAsync has ratings to update.
+    private static (GameOrchestrator Orchestrator, MockGameRepository GameRepository, MockPlayerRepository PlayerRepository) CreateOrchestratorWithPlayers(
+        int whiteRating = 1200, int blackRating = 1200)
+    {
+        var gameRepository = new MockGameRepository();
+        var playerRepository = new MockPlayerRepository();
+        playerRepository.AddedPlayers.Add(new PlayerEntity { Id = WhitePlayerId, Username = "white", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = whiteRating });
+        playerRepository.AddedPlayers.Add(new PlayerEntity { Id = BlackPlayerId, Username = "black", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = blackRating });
+
+        var orchestrator = new GameOrchestrator(new GameStore(), gameRepository.Object, playerRepository.Object);
+        return (orchestrator, gameRepository, playerRepository);
     }
 
     [Fact]
@@ -386,5 +400,86 @@ public class GameOrchestratorTests
         orchestrator.Disconnect("white-conn");
 
         Assert.Throws<NoActiveConnectionException>(() => orchestrator.OfferDraw("white-conn"));
+    }
+
+    [Fact]
+    public async Task ResignAsync_EqualRatings_WinnerGainsAndLoserLosesSameAmount()
+    {
+        var (orchestrator, _, players) = CreateOrchestratorWithPlayers(whiteRating: 1200, blackRating: 1200);
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+
+        await orchestrator.ResignAsync("white-conn");
+
+        var white = players.AddedPlayers.Single(p => p.Id == WhitePlayerId);
+        var black = players.AddedPlayers.Single(p => p.Id == BlackPlayerId);
+        Assert.Equal(1184, white.EloRating);
+        Assert.Equal(1216, black.EloRating);
+    }
+
+    [Fact]
+    public async Task ResignAsync_HigherRatedPlayerLosingToLowerRated_LosesMoreThanEqualRatedCase()
+    {
+        var (orchestrator, _, players) = CreateOrchestratorWithPlayers(whiteRating: 1600, blackRating: 1200);
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+
+        await orchestrator.ResignAsync("white-conn");
+
+        var white = players.AddedPlayers.Single(p => p.Id == WhitePlayerId);
+        var black = players.AddedPlayers.Single(p => p.Id == BlackPlayerId);
+        Assert.True(white.EloRating < 1600 - 16, "Favorite should lose more than 16 points for an upset loss.");
+        Assert.True(black.EloRating > 1200 + 16, "Underdog should gain more than 16 points for an upset win.");
+    }
+
+    [Fact]
+    public async Task RespondToDrawAsync_Accept_EqualRatings_RatingsUnchanged()
+    {
+        var (orchestrator, _, players) = CreateOrchestratorWithPlayers(whiteRating: 1200, blackRating: 1200);
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+        orchestrator.OfferDraw("white-conn");
+
+        await orchestrator.RespondToDrawAsync("black-conn", accept: true);
+
+        var white = players.AddedPlayers.Single(p => p.Id == WhitePlayerId);
+        var black = players.AddedPlayers.Single(p => p.Id == BlackPlayerId);
+        Assert.Equal(1200, white.EloRating);
+        Assert.Equal(1200, black.EloRating);
+    }
+
+    [Fact]
+    public async Task MakeMoveAsync_Checkmate_UpdatesBothPlayersRatings()
+    {
+        var (orchestrator, _, players) = CreateOrchestratorWithPlayers(whiteRating: 1200, blackRating: 1200);
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+
+        // Fool's mate: 1. f3 e5 2. g4 Qh4#
+        await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(5, 1), new PieceCord(5, 2)), null);
+        await orchestrator.MakeMoveAsync("black-conn", new PieceMove(new PieceCord(4, 6), new PieceCord(4, 4)), null);
+        await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(6, 1), new PieceCord(6, 3)), null);
+        await orchestrator.MakeMoveAsync("black-conn", new PieceMove(new PieceCord(3, 7), new PieceCord(7, 3)), null);
+
+        var white = players.AddedPlayers.Single(p => p.Id == WhitePlayerId);
+        var black = players.AddedPlayers.Single(p => p.Id == BlackPlayerId);
+        Assert.Equal(1184, white.EloRating);
+        Assert.Equal(1216, black.EloRating);
+    }
+
+    [Fact]
+    public async Task ResignAsync_OpponentSeatNeverFilled_DoesNotAttemptRatingUpdate()
+    {
+        var (orchestrator, _, players) = CreateOrchestratorWithPlayers();
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+
+        await orchestrator.ResignAsync("white-conn");
+
+        players.Mock.Verify(r => r.UpdateRatingAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

@@ -8,7 +8,7 @@ namespace Chess.Orchestrator;
 
 public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 
-public class GameOrchestrator(GameStore store, IGameRepository repository) : IGameOrchestrator
+public class GameOrchestrator(GameStore store, IGameRepository repository, IPlayerRepository playerRepository) : IGameOrchestrator
 {
     public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, CancellationToken ct = default)
     {
@@ -121,6 +121,25 @@ public class GameOrchestrator(GameStore store, IGameRepository repository) : IGa
             await EndGameAsync(room, ct);
     }
 
-    private Task EndGameAsync(GameRoom room, CancellationToken ct) =>
-        repository.EndGameAsync(Guid.Parse(room.Id), room.Session.Result, DateTime.UtcNow, ct);
+    private async Task EndGameAsync(GameRoom room, CancellationToken ct)
+    {
+        var result = room.Session.Result;
+        await repository.EndGameAsync(Guid.Parse(room.Id), result, DateTime.UtcNow, ct);
+
+        if (room.WhitePlayerId is { } whitePlayerId && room.BlackPlayerId is { } blackPlayerId)
+            await UpdateRatingsAsync(whitePlayerId, blackPlayerId, result, ct);
+    }
+
+    private async Task UpdateRatingsAsync(Guid whitePlayerId, Guid blackPlayerId, GameResult result, CancellationToken ct)
+    {
+        var whitePlayer = await playerRepository.GetByIdAsync(whitePlayerId, ct);
+        var blackPlayer = await playerRepository.GetByIdAsync(blackPlayerId, ct);
+        if (whitePlayer is null || blackPlayer is null)
+            return;
+
+        var (newWhiteRating, newBlackRating) = EloCalculator.CalculateNewRatings(whitePlayer.EloRating, blackPlayer.EloRating, result);
+
+        await playerRepository.UpdateRatingAsync(whitePlayerId, newWhiteRating, ct);
+        await playerRepository.UpdateRatingAsync(blackPlayerId, newBlackRating, ct);
+    }
 }
