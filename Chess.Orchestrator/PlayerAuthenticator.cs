@@ -27,7 +27,7 @@ public class PlayerAuthenticator(IPlayerRepository repository) : IPlayerAuthenti
         };
 
         await repository.AddPlayerAsync(player, ct);
-        return new AuthenticatedPlayer(player.Id, player.Username);
+        return new AuthenticatedPlayer(player.Id, player.Username, player.EloRating);
     }
 
     public async Task<AuthenticatedPlayer> LoginAsync(string username, string password, CancellationToken ct = default)
@@ -36,6 +36,6 @@ public class PlayerAuthenticator(IPlayerRepository repository) : IPlayerAuthenti
         if (player is null || !BCrypt.Net.BCrypt.Verify(password, player.PasswordHash))
             throw new InvalidCredentialsException();
 
-        return new AuthenticatedPlayer(player.Id, player.Username);
+        return new AuthenticatedPlayer(player.Id, player.Username, player.EloRating);
     }
 }

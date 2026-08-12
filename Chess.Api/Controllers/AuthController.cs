@@ -15,7 +15,7 @@ public class AuthController(IPlayerAuthenticator authenticator, JwtTokenFactory 
         try
         {
             var player = await authenticator.RegisterAsync(request.Username, request.Password);
-            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username));
+            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
         }
         catch (AuthException ex)
         {
@@ -29,7 +29,7 @@ public class AuthController(IPlayerAuthenticator authenticator, JwtTokenFactory 
         try
         {
             var player = await authenticator.LoginAsync(request.Username, request.Password);
-            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username));
+            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
         }
         catch (InvalidCredentialsException)
         {

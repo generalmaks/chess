@@ -19,7 +19,7 @@ public static class AuthTestHelper
         var playerId = Guid.NewGuid();
         authenticator
             .Setup(a => a.RegisterAsync(username, password, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(playerId, username));
+            .ReturnsAsync(new AuthenticatedPlayer(playerId, username, 1200));
 
         var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest(username, password));
         if (!response.IsSuccessStatusCode)

@@ -15,7 +15,7 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
         var (_, authenticator) = factory.ResetMocks();
         authenticator
             .Setup(a => a.RegisterAsync("newplayer", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "newplayer"));
+            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "newplayer", 1200));
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest("newplayer", "password123"));
@@ -24,6 +24,7 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
         var body = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.False(string.IsNullOrWhiteSpace(body!.Token));
         Assert.Equal("newplayer", body.Username);
+        Assert.Equal(1200, body.EloRating);
     }
 
     [Theory]
@@ -49,7 +50,7 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
         var (_, authenticator) = factory.ResetMocks();
         authenticator
             .Setup(a => a.LoginAsync("player", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "player"));
+            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "player", 1200));
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/login", new LoginRequest("player", "password123"));
