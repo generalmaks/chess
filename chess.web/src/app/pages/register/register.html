@@ -1,0 +1,49 @@
+<div class="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+  <div class="w-full max-w-sm rounded-xl bg-white p-8 shadow-md">
+    <h1 class="mb-6 text-center text-2xl font-semibold text-slate-800">Create an account</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+      <div>
+        <label for="username" class="mb-1 block text-sm font-medium text-slate-600">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-slate-500 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="mb-1 block text-sm font-medium text-slate-600">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-slate-500 focus:outline-none"
+        />
+        @if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+          <p class="mt-1 text-xs text-red-600">Password must be at least 6 characters.</p>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || isSubmitting()"
+        class="w-full rounded-md bg-slate-800 py-2 font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ isSubmitting() ? 'Creating account…' : 'Register' }}
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-slate-500">
+      Already have an account?
+      <a routerLink="/login" class="font-medium text-slate-800 hover:underline">Log in</a>
+    </p>
+  </div>
+</div>

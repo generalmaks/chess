@@ -1,0 +1,46 @@
+<div class="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+  <div class="w-full max-w-sm rounded-xl bg-white p-8 shadow-md">
+    <h1 class="mb-6 text-center text-2xl font-semibold text-slate-800">Log in</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+      <div>
+        <label for="username" class="mb-1 block text-sm font-medium text-slate-600">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-slate-500 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="mb-1 block text-sm font-medium text-slate-600">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-slate-500 focus:outline-none"
+        />
+      </div>
+
+      @if (errorMessage()) {
+        <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || isSubmitting()"
+        class="w-full rounded-md bg-slate-800 py-2 font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ isSubmitting() ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-slate-500">
+      Don't have an account?
+      <a routerLink="/register" class="font-medium text-slate-800 hover:underline">Register</a>
+    </p>
+  </div>
+</div>
