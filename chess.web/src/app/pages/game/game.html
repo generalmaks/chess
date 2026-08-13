@@ -1,0 +1,77 @@
+<div class="min-h-screen bg-slate-100 px-4 py-8">
+  <div class="mx-auto max-w-2xl">
+    <a routerLink="/play" class="mb-4 inline-block text-sm text-slate-500 hover:underline">&larr; Back to lobby</a>
+
+    @if (joinError()) {
+      <p class="rounded-md bg-red-50 p-4 text-sm text-red-600">{{ joinError() }}</p>
+    } @else {
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">
+            You're playing <span class="font-medium text-slate-800">{{ game.myTeam() }}</span>
+          </p>
+          @if (game.result() === 'Ongoing') {
+            <p class="text-sm text-slate-500">
+              {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
+            </p>
+          } @else {
+            <p class="text-sm font-semibold text-slate-800">{{ resultLabel() }}</p>
+          }
+        </div>
+
+        @if (game.result() === 'Ongoing') {
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="offerDraw()"
+              class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200"
+            >
+              Offer draw
+            </button>
+            <button
+              type="button"
+              (click)="resign()"
+              class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            >
+              Resign
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (game.drawOfferedByOpponent()) {
+        <div class="mb-4 flex items-center justify-between rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+          <span>Your opponent offered a draw.</span>
+          <div class="flex gap-2">
+            <button type="button" (click)="respondToDraw(true)" class="font-medium hover:underline">Accept</button>
+            <button type="button" (click)="respondToDraw(false)" class="font-medium hover:underline">Decline</button>
+          </div>
+        </div>
+      }
+
+      @if (game.error()) {
+        <p class="mb-4 text-sm text-red-600">{{ game.error() }}</p>
+      }
+
+      <div class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md">
+        @for (row of rows(); track row[0].y) {
+          @for (square of row; track square.x) {
+            <button
+              type="button"
+              (click)="onSquareClick(square)"
+              class="flex aspect-square items-center justify-center p-1"
+              [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
+              [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
+              [class.ring-4]="isSelected(square.x, square.y)"
+              [class.ring-blue-400]="isSelected(square.x, square.y)"
+            >
+              @if (pieceImage(square.piece); as src) {
+                <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
+              }
+            </button>
+          }
+        }
+      </div>
+    }
+  </div>
+</div>

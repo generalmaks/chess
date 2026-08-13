@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-slate-100 px-4 py-8">
+  <div class="mx-auto max-w-md">
+    <a routerLink="/" class="mb-6 inline-block text-sm text-slate-500 hover:underline">&larr; Back</a>
+
+    <div class="rounded-xl bg-white p-8 shadow-md">
+      <h1 class="mb-6 text-center text-2xl font-semibold text-slate-800">Play chess</h1>
+
+      <section class="mb-8">
+        <h2 class="mb-3 text-sm font-medium text-slate-600">Start a new game</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            (click)="createGame('white')"
+            [disabled]="isCreating()"
+            class="rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          >
+            White
+          </button>
+          <button
+            type="button"
+            (click)="createGame()"
+            [disabled]="isCreating()"
+            class="rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          >
+            Random
+          </button>
+          <button
+            type="button"
+            (click)="createGame('black')"
+            [disabled]="isCreating()"
+            class="rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          >
+            Black
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="mb-3 text-sm font-medium text-slate-600">Join a game</h2>
+        <form (ngSubmit)="joinGame()" class="flex gap-2">
+          <input
+            type="text"
+            [ngModel]="joinGameId()"
+            (ngModelChange)="joinGameId.set($event)"
+            name="gameId"
+            placeholder="Game ID"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-slate-500 focus:outline-none"
+          />
+          <button
+            type="submit"
+            class="shrink-0 rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          >
+            Join
+          </button>
+        </form>
+      </section>
+
+      @if (errorMessage()) {
+        <p class="mt-4 text-sm text-red-600">{{ errorMessage() }}</p>
+      }
+    </div>
+  </div>
+</div>

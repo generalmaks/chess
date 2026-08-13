@@ -20,6 +20,16 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   {
+    path: 'play',
+    loadComponent: () => import('./pages/play/play').then((m) => m.Play),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'game/:gameId',
+    loadComponent: () => import('./pages/game/game').then((m) => m.Game),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: ''
   }
