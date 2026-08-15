@@ -90,7 +90,23 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         return new DrawResponseResult(room, Accepted: true);
     }
 
-    public void Disconnect(string connectionId) => store.RemoveConnection(connectionId);
+    public async Task<GameRoom?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
+    {
+        var connection = store.GetConnection(connectionId);
+        store.RemoveConnection(connectionId);
+
+        if (connection is null)
+            return null;
+
+        var room = store.GetGame(connection.GameId);
+        if (room is null || room.Session.Result != GameResult.Ongoing || !room.BothPlayersJoined)
+            return null;
+
+        room.Session.Resign(connection.Team);
+        await EndGameAsync(room, ct);
+
+        return room;
+    }
 
     private (GameRoom Room, Team Team) GetActiveConnection(string connectionId)
     {

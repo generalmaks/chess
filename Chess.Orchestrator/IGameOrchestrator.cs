@@ -17,5 +17,8 @@ public interface IGameOrchestrator
 
     Task<DrawResponseResult> RespondToDrawAsync(string connectionId, bool accept, CancellationToken ct = default);
 
-    void Disconnect(string connectionId);
+    // Called when a player's connection drops for any reason (explicit leave, tab close,
+    // network loss, ...). If they were mid-game with an opponent already seated, this
+    // resigns them so the game doesn't hang open forever; otherwise it's a no-op cleanup.
+    Task<GameRoom?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default);
 }

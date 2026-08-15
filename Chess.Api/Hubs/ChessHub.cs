@@ -56,10 +56,15 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
         await Clients.Group(GroupName(result.Room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(result.Room.State));
     }
 
-    public override Task OnDisconnectedAsync(Exception? exception)
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        orchestrator.Disconnect(Context.ConnectionId);
-        return base.OnDisconnectedAsync(exception);
+        var room = await orchestrator.HandleDisconnectAsync(Context.ConnectionId);
+        if (room is not null)
+        {
+            await Clients.Group(GroupName(room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(room.State));
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 
     private Guid GetPlayerId() => Guid.Parse(Context.User!.FindFirstValue(JwtRegisteredClaimNames.Sub)!);

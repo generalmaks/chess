@@ -1,6 +1,8 @@
 <div class="min-h-screen bg-slate-100 px-4 py-8">
   <div class="mx-auto max-w-2xl">
-    <a routerLink="/play" class="mb-4 inline-block text-sm text-slate-500 hover:underline">&larr; Back to lobby</a>
+    @if (!game.opponentJoined() || game.result() !== 'Ongoing') {
+      <a routerLink="/play" class="mb-4 inline-block text-sm text-slate-500 hover:underline">&larr; Back to lobby</a>
+    }
 
     @if (joinError()) {
       <p class="rounded-md bg-red-50 p-4 text-sm text-red-600">{{ joinError() }}</p>
