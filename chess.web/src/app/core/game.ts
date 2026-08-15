@@ -37,7 +37,9 @@ export class Game {
   readonly opponentJoined = this.opponentJoinedSignal.asReadonly();
   readonly drawOfferedByOpponent = this.drawOfferedByOpponentSignal.asReadonly();
 
-  readonly isMyTurn = computed(() => this.result() === 'Ongoing' && this.currentTurn() === this.myTeam());
+  readonly isMyTurn = computed(
+    () => this.result() === 'Ongoing' && this.opponentJoined() && this.currentTurn() === this.myTeam()
+  );
 
   createGame(color?: 'white' | 'black'): Promise<CreateGameResponse> {
     const query = color ? `?color=${color}` : '';
@@ -51,6 +53,7 @@ export class Game {
 
     this.gameIdSignal.set(gameId);
     this.myTeamSignal.set(response.team);
+    this.opponentJoinedSignal.set(response.opponentJoined);
     this.applyState(response.state);
 
     this.refreshTimer = setInterval(() => {

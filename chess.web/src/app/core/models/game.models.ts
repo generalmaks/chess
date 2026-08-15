@@ -22,6 +22,7 @@ export interface GameStateDto {
 export interface JoinGameResponse {
   team: Team;
   state: GameStateDto;
+  opponentJoined: boolean;
 }
 
 export interface MoveRequest {

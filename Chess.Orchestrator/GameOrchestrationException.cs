@@ -10,4 +10,6 @@ public class NoActiveConnectionException() : GameOrchestrationException("Call Jo
 
 public class NotYourTurnException() : GameOrchestrationException("It's not your turn.");
 
+public class OpponentNotJoinedException() : GameOrchestrationException("Waiting for opponent to join.");
+
 public class NoDrawOfferException() : GameOrchestrationException("No draw offer to respond to.");

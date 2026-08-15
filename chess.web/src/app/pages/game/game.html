@@ -12,7 +12,11 @@
           </p>
           @if (game.result() === 'Ongoing') {
             <p class="text-sm text-slate-500">
-              {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
+              @if (!game.opponentJoined()) {
+                Waiting for opponent to join&hellip;
+              } @else {
+                {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
+              }
             </p>
           } @else {
             <p class="text-sm font-semibold text-slate-800">{{ resultLabel() }}</p>

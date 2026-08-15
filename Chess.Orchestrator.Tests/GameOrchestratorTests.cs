@@ -185,11 +185,24 @@ public class GameOrchestratorTests
     }
 
     [Fact]
+    public async Task MakeMoveAsync_OpponentNotJoined_ThrowsOpponentNotJoinedException()
+    {
+        var (orchestrator, _) = CreateOrchestrator();
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+
+        var move = new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3));
+
+        await Assert.ThrowsAsync<OpponentNotJoinedException>(() => orchestrator.MakeMoveAsync("white-conn", move, null));
+    }
+
+    [Fact]
     public async Task MakeMoveAsync_IllegalMove_ThrowsIllegalMoveException()
     {
         var (orchestrator, _) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
         await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
 
         // Pawns cannot move four squares in one go.
         var move = new PieceMove(new PieceCord(4, 1), new PieceCord(4, 5));
@@ -203,6 +216,7 @@ public class GameOrchestratorTests
         var (orchestrator, repo) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
         await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
 
         var move = new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)); // e2-e4
         var updatedRoom = await orchestrator.MakeMoveAsync("white-conn", move, null);

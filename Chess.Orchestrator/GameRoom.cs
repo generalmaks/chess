@@ -18,6 +18,8 @@ public class GameRoom(string id)
     public Guid? WhitePlayerId { get; private set; }
     public Guid? BlackPlayerId { get; private set; }
 
+    public bool BothPlayersJoined => WhitePlayerId is not null && BlackPlayerId is not null;
+
     // Set while one player has offered a draw and the other hasn't responded yet.
     public Team? DrawOfferedBy { get; set; }
 

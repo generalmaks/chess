@@ -44,6 +44,8 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
     public async Task<GameRoom> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
+        if (!room.BothPlayersJoined)
+            throw new OpponentNotJoinedException();
         if (room.Session.CurrentTurn != team)
             throw new NotYourTurnException();
 
