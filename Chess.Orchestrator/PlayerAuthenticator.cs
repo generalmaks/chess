@@ -38,4 +38,10 @@ public class PlayerAuthenticator(IPlayerRepository repository) : IPlayerAuthenti
 
         return new AuthenticatedPlayer(player.Id, player.Username, player.EloRating);
     }
+
+    public async Task<AuthenticatedPlayer> RefreshAsync(Guid playerId, CancellationToken ct = default)
+    {
+        var player = await repository.GetByIdAsync(playerId, ct) ?? throw new InvalidCredentialsException();
+        return new AuthenticatedPlayer(player.Id, player.Username, player.EloRating);
+    }
 }

@@ -7,12 +7,17 @@ import { API_BASE_URL } from './api-config';
 import { Auth } from './auth';
 import { CreateGameResponse, GameResult, GameStateDto, JoinGameResponse, MoveRequest, Team } from './models/game.models';
 
+// Well inside the backend's 60-minute JWT expiry, so a long-running game never
+// gets kicked mid-match while the token stored for reconnects goes stale.
+const TOKEN_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+
 @Service()
 export class Game {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
 
   private connection: signalR.HubConnection | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   private readonly gameIdSignal = signal<string | null>(null);
   private readonly myTeamSignal = signal<Team | null>(null);
@@ -47,6 +52,10 @@ export class Game {
     this.gameIdSignal.set(gameId);
     this.myTeamSignal.set(response.team);
     this.applyState(response.state);
+
+    this.refreshTimer = setInterval(() => {
+      firstValueFrom(this.auth.refresh()).catch(() => {});
+    }, TOKEN_REFRESH_INTERVAL_MS);
   }
 
   async makeMove(fromX: number, fromY: number, toX: number, toY: number, promotion?: string): Promise<void> {
@@ -86,6 +95,11 @@ export class Game {
   }
 
   async leave(): Promise<void> {
+    if (this.refreshTimer !== null) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+
     await this.connection?.stop();
     this.connection = null;
     this.gameIdSignal.set(null);

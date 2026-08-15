@@ -35,6 +35,12 @@ export class Auth {
       .pipe(tap((response) => this.storeAuth(response)));
   }
 
+  refresh(): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {})
+      .pipe(tap((response) => this.storeAuth(response)));
+  }
+
   logout(): void {
     this.currentAuth.set(null);
     localStorage.removeItem(STORAGE_KEY);
