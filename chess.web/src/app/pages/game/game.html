@@ -53,24 +53,47 @@
         <p class="mb-4 text-sm text-red-600">{{ game.error() }}</p>
       }
 
-      <div class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md">
-        @for (row of rows(); track row[0].y) {
-          @for (square of row; track square.x) {
-            <button
-              type="button"
-              (click)="onSquareClick(square)"
-              class="flex aspect-square items-center justify-center p-1"
-              [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
-              [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
-              [class.ring-4]="isSelected(square.x, square.y)"
-              [class.ring-blue-400]="isSelected(square.x, square.y)"
-            >
-              @if (pieceImage(square.piece); as src) {
-                <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
-              }
-            </button>
+      <div class="flex">
+        <div class="flex w-6 flex-col">
+          @for (rank of rankLabels(); track rank) {
+            <div class="flex flex-1 items-center justify-center text-base font-semibold text-slate-500">
+              {{ rank }}
+            </div>
           }
-        }
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md">
+            @for (row of rows(); track row[0].y) {
+              @for (square of row; track square.x) {
+                <button
+                  type="button"
+                  (click)="onSquareClick(square)"
+                  class="flex aspect-square items-center justify-center p-1"
+                  [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
+                  [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
+                  [class.ring-4]="isSelected(square.x, square.y)"
+                  [class.ring-blue-400]="isSelected(square.x, square.y)"
+                >
+                  @if (pieceImage(square.piece); as src) {
+                    <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
+                  }
+                </button>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="flex">
+        <div class="w-6"></div>
+        <div class="grid min-w-0 flex-1 grid-cols-8">
+          @for (file of fileLabels(); track file) {
+            <div class="flex items-center justify-center pt-2 text-base font-semibold text-slate-500">
+              {{ file }}
+            </div>
+          }
+        </div>
       </div>
     }
   </div>

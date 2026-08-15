@@ -49,6 +49,18 @@ export class Game implements OnInit, OnDestroy {
     return ranks.map((y) => files.map((x) => ({ x, y, piece: board[x]?.[y] ?? null })));
   });
 
+  protected readonly rankLabels = computed<number[]>(() => {
+    const flip = this.game.myTeam() === 'Black';
+    const ranks = flip ? range(0, 8) : range(0, 8).reverse();
+    return ranks.map((y) => y + 1);
+  });
+
+  protected readonly fileLabels = computed<string[]>(() => {
+    const flip = this.game.myTeam() === 'Black';
+    const files = flip ? range(0, 8).reverse() : range(0, 8);
+    return files.map((x) => String.fromCharCode(65 + x));
+  });
+
   async ngOnInit(): Promise<void> {
     const gameId = this.route.snapshot.paramMap.get('gameId');
     if (!gameId) {
