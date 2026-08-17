@@ -9,6 +9,8 @@ public enum GameResult
     BlackWonByResignation,
     WhiteWonByAbandonment,
     BlackWonByAbandonment,
+    WhiteWonOnTime,
+    BlackWonOnTime,
     StalemateDraw,
     FiftyMoveRuleDraw,
     DrawByAgreement

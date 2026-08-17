@@ -3,15 +3,17 @@ using Chess.Logic.Pieces.Chess;
 
 namespace Chess.Orchestrator;
 
-public class GameRoom(string id)
+public class GameRoom(string id, TimeControl? timeControl = null, TimeProvider? timeProvider = null)
 {
     private readonly object _joinLock = new();
 
     public string Id { get; } = id;
 
+    internal SemaphoreSlim MutationLock { get; } = new(1, 1);
+
     // Internal: GameOrchestrator is the only thing allowed to mutate a session (turn
     // checks, draw-offer rules, ...). Outside Chess.Orchestrator, use State instead.
-    internal ChessGameSession Session { get; } = new();
+    internal ChessGameSession Session { get; } = new(timeControl, timeProvider);
 
     public GameStateSnapshot State => GameStateSnapshot.Capture(Session);
 
@@ -29,17 +31,13 @@ public class GameRoom(string id)
         if (playerId == BlackPlayerId) return Team.Black;
         return null;
     }
-
-    // Used once, right after construction, to seat the creator in their chosen (or
-    // randomly rolled) team. No locking needed: nobody else can reach this room yet.
+    
     internal void SeatCreator(Guid playerId, Team team)
     {
         if (team == Team.White) WhitePlayerId = playerId;
         else BlackPlayerId = playerId;
     }
-
-    // Atomically claims whichever seat is still open for a joining player. Returns null if
-    // both seats are already taken.
+    
     internal Team? TryClaimOpenSeat(Guid playerId)
     {
         lock (_joinLock)

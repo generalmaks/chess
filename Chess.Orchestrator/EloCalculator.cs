@@ -10,8 +10,8 @@ public static class EloCalculator
     {
         var whiteScore = result switch
         {
-            GameResult.WhiteWonByCheckmate or GameResult.WhiteWonByResignation or GameResult.WhiteWonByAbandonment => 1.0,
-            GameResult.BlackWonByCheckmate or GameResult.BlackWonByResignation or GameResult.BlackWonByAbandonment => 0.0,
+            GameResult.WhiteWonByCheckmate or GameResult.WhiteWonByResignation or GameResult.WhiteWonByAbandonment or GameResult.WhiteWonOnTime => 1.0,
+            GameResult.BlackWonByCheckmate or GameResult.BlackWonByResignation or GameResult.BlackWonByAbandonment or GameResult.BlackWonOnTime => 0.0,
             GameResult.StalemateDraw or GameResult.FiftyMoveRuleDraw or GameResult.DrawByAgreement => 0.5,
             _ => throw new ArgumentOutOfRangeException(nameof(result), result, "Cannot rate a game that hasn't ended."),
         };

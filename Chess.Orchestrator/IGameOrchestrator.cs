@@ -1,3 +1,4 @@
+using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
 
@@ -5,7 +6,7 @@ namespace Chess.Orchestrator;
 
 public interface IGameOrchestrator
 {
-    Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, CancellationToken ct = default);
+    Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default);
 
     Task<(GameRoom Room, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default);
 
@@ -21,4 +22,6 @@ public interface IGameOrchestrator
     // network loss, ...). If they were mid-game with an opponent already seated, this
     // resigns them so the game doesn't hang open forever; otherwise it's a no-op cleanup.
     Task<GameRoom?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default);
+
+    Task<GameRoom?> CheckTimeoutAsync(string gameId, CancellationToken ct = default);
 }

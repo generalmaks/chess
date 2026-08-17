@@ -31,7 +31,7 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         var room = new GameRoom(Guid.NewGuid().ToString());
         room.SeatCreator(playerId, team);
         orchestrator
-            .Setup(o => o.CreateGameAsync(playerId, team, It.IsAny<CancellationToken>()))
+            .Setup(o => o.CreateGameAsync(playerId, team, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
 
         var response = await client.PostAsync($"/games?color={colorParam}", null);
@@ -49,7 +49,7 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         var room = new GameRoom(Guid.NewGuid().ToString());
         room.SeatCreator(playerId, Team.White);
         orchestrator
-            .Setup(o => o.CreateGameAsync(playerId, null, It.IsAny<CancellationToken>()))
+            .Setup(o => o.CreateGameAsync(playerId, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
 
         var response = await client.PostAsync("/games", null);

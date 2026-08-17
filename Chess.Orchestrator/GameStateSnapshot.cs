@@ -3,7 +3,12 @@ using Chess.Logic.Pieces.Chess;
 
 namespace Chess.Orchestrator;
 
-public sealed record GameStateSnapshot(string?[][] Board, Team CurrentTurn, GameResult Result)
+public sealed record GameStateSnapshot(
+    string?[][] Board,
+    Team CurrentTurn,
+    GameResult Result,
+    TimeSpan? WhiteTimeRemaining,
+    TimeSpan? BlackTimeRemaining)
 {
     internal static GameStateSnapshot Capture(ChessGameSession session)
     {
@@ -18,6 +23,11 @@ public sealed record GameStateSnapshot(string?[][] Board, Team CurrentTurn, Game
             }
         }
 
-        return new GameStateSnapshot(board, session.CurrentTurn, session.Result);
+        return new GameStateSnapshot(
+            board,
+            session.CurrentTurn,
+            session.Result,
+            session.TimeRemaining(Team.White),
+            session.TimeRemaining(Team.Black));
     }
 }

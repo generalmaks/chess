@@ -196,4 +196,95 @@ public class ChessGameSessionTests
 
         Assert.Throws<GameAlreadyEndedException>(session.AgreeToDraw);
     }
+
+    [Fact]
+    public void TimeRemaining_UntimedGame_ReturnsNull()
+    {
+        var session = new ChessGameSession();
+
+        Assert.Null(session.TimeRemaining(Team.White));
+        Assert.Null(session.TimeRemaining(Team.Black));
+    }
+
+    [Fact]
+    public void TimeRemaining_TeamOnMove_ReflectsElapsedTime()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromSeconds(20));
+
+        Assert.Equal(TimeSpan.FromMinutes(5) - TimeSpan.FromSeconds(20), session.TimeRemaining(Team.White));
+        Assert.Equal(TimeSpan.FromMinutes(5), session.TimeRemaining(Team.Black));
+    }
+
+    [Fact]
+    public void MakeMove_DeductsSpentTimeAndAppliesIncrement()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2)), time);
+
+        time.Advance(TimeSpan.FromSeconds(10));
+        session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)));
+
+        Assert.Equal(TimeSpan.FromMinutes(5) - TimeSpan.FromSeconds(8), session.TimeRemaining(Team.White));
+        Assert.Equal(TimeSpan.FromMinutes(5), session.TimeRemaining(Team.Black));
+    }
+
+    [Fact]
+    public void CheckTimeout_ClockExpired_SetsResultAndReturnsTrue()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1));
+
+        Assert.True(session.CheckTimeout());
+        Assert.Equal(GameResult.BlackWonOnTime, session.Result);
+    }
+
+    [Fact]
+    public void CheckTimeout_ClockNotExpired_ReturnsFalseAndLeavesGameOngoing()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(1));
+
+        Assert.False(session.CheckTimeout());
+        Assert.Equal(GameResult.Ongoing, session.Result);
+    }
+
+    [Fact]
+    public void CheckTimeout_UntimedGame_ReturnsFalse()
+    {
+        var session = new ChessGameSession();
+
+        Assert.False(session.CheckTimeout());
+    }
+
+    [Fact]
+    public void StartClock_ResetsElapsedTimeForCurrentMover()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(10));
+        session.StartClock();
+
+        Assert.False(session.CheckTimeout());
+        Assert.Equal(TimeSpan.FromMinutes(5), session.TimeRemaining(Team.White));
+    }
+
+    [Fact]
+    public void MakeMove_DoesNotAutomaticallyCheckTimeout()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(10));
+        session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)));
+
+        Assert.Equal(GameResult.Ongoing, session.Result);
+    }
 }

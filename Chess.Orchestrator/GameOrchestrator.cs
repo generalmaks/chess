@@ -8,12 +8,14 @@ namespace Chess.Orchestrator;
 
 public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 
-public class GameOrchestrator(GameStore store, IGameRepository repository, IPlayerRepository playerRepository) : IGameOrchestrator
+public class GameOrchestrator(GameStore store, IGameRepository repository, IPlayerRepository playerRepository, TimeProvider? timeProvider = null) : IGameOrchestrator
 {
-    public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, CancellationToken ct = default)
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
+    public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default)
     {
         var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
-        var room = store.CreateGame(playerId, team);
+        var room = store.CreateGame(playerId, team, timeControl, _timeProvider);
 
         await repository.AddGameAsync(new GameEntity
         {
@@ -34,6 +36,9 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         if (team is null)
         {
             team = room.TryClaimOpenSeat(playerId) ?? throw new GameFullException();
+            if (room.BothPlayersJoined)
+                room.Session.StartClock();
+
             await repository.AssignPlayerAsync(Guid.Parse(gameId), team.Value, playerId, ct);
         }
 
@@ -46,24 +51,44 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         var (room, team) = GetActiveConnection(connectionId);
         if (!room.BothPlayersJoined)
             throw new OpponentNotJoinedException();
-        if (room.Session.CurrentTurn != team)
-            throw new NotYourTurnException();
 
-        room.Session.MakeMove(move, promotion);
-        room.DrawOfferedBy = null;
+        await room.MutationLock.WaitAsync(ct);
+        try
+        {
+            await EndIfTimedOutAsync(room, ct);
+            if (room.Session.Result != GameResult.Ongoing)
+                throw new GameAlreadyEndedException();
+            if (room.Session.CurrentTurn != team)
+                throw new NotYourTurnException();
 
-        await PersistMoveAsync(room, team, ct);
-        return room;
+            room.Session.MakeMove(move, promotion);
+            room.DrawOfferedBy = null;
+
+            await PersistMoveAsync(room, team, ct);
+            return room;
+        }
+        finally
+        {
+            room.MutationLock.Release();
+        }
     }
 
     public async Task<GameRoom> ResignAsync(string connectionId, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
 
-        room.Session.Resign(team);
-        await EndGameAsync(room, ct);
-
-        return room;
+        await room.MutationLock.WaitAsync(ct);
+        try
+        {
+            await EndIfTimedOutAsync(room, ct);
+            room.Session.Resign(team);
+            await EndGameAsync(room, ct);
+            return room;
+        }
+        finally
+        {
+            room.MutationLock.Release();
+        }
     }
 
     public (GameRoom Room, Team Team) OfferDraw(string connectionId)
@@ -76,18 +101,28 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
     public async Task<DrawResponseResult> RespondToDrawAsync(string connectionId, bool accept, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
-        if (room.DrawOfferedBy is null || room.DrawOfferedBy == team)
-            throw new NoDrawOfferException();
 
-        room.DrawOfferedBy = null;
+        await room.MutationLock.WaitAsync(ct);
+        try
+        {
+            await EndIfTimedOutAsync(room, ct);
+            if (room.DrawOfferedBy is null || room.DrawOfferedBy == team)
+                throw new NoDrawOfferException();
 
-        if (!accept)
-            return new DrawResponseResult(room, Accepted: false);
+            room.DrawOfferedBy = null;
 
-        room.Session.AgreeToDraw();
-        await EndGameAsync(room, ct);
+            if (!accept)
+                return new DrawResponseResult(room, Accepted: false);
 
-        return new DrawResponseResult(room, Accepted: true);
+            room.Session.AgreeToDraw();
+            await EndGameAsync(room, ct);
+
+            return new DrawResponseResult(room, Accepted: true);
+        }
+        finally
+        {
+            room.MutationLock.Release();
+        }
     }
 
     public async Task<GameRoom?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
@@ -102,10 +137,48 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         if (room is null || room.Session.Result != GameResult.Ongoing || !room.BothPlayersJoined)
             return null;
 
-        room.Session.Abandon(connection.Team);
-        await EndGameAsync(room, ct);
+        await room.MutationLock.WaitAsync(ct);
+        try
+        {
+            if (await EndIfTimedOutAsync(room, ct))
+                return room;
+            if (room.Session.Result != GameResult.Ongoing)
+                return null;
 
-        return room;
+            room.Session.Abandon(connection.Team);
+            await EndGameAsync(room, ct);
+            return room;
+        }
+        finally
+        {
+            room.MutationLock.Release();
+        }
+    }
+
+    public async Task<GameRoom?> CheckTimeoutAsync(string gameId, CancellationToken ct = default)
+    {
+        var room = store.GetGame(gameId);
+        if (room is null)
+            return null;
+
+        await room.MutationLock.WaitAsync(ct);
+        try
+        {
+            return await EndIfTimedOutAsync(room, ct) ? room : null;
+        }
+        finally
+        {
+            room.MutationLock.Release();
+        }
+    }
+
+    private async Task<bool> EndIfTimedOutAsync(GameRoom room, CancellationToken ct)
+    {
+        if (!room.BothPlayersJoined || !room.Session.CheckTimeout())
+            return false;
+
+        await EndGameAsync(room, ct);
+        return true;
     }
 
     private (GameRoom Room, Team Team) GetActiveConnection(string connectionId)
