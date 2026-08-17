@@ -271,10 +271,10 @@ public class GameOrchestratorTests
         await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(6, 1), new PieceCord(6, 3)), null);
         var finalRoom = await orchestrator.MakeMoveAsync("black-conn", new PieceMove(new PieceCord(3, 7), new PieceCord(7, 3)), null);
 
-        Assert.Equal(GameResult.BlackWon, finalRoom.State.Result);
+        Assert.Equal(GameResult.BlackWonByCheckmate, finalRoom.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
-        Assert.Equal(GameResult.BlackWon, gameEntity.Result);
+        Assert.Equal(GameResult.BlackWonByCheckmate, gameEntity.Result);
         Assert.NotNull(gameEntity.EndedAtUtc);
 
         Assert.Equal(4, repo.AddedMoves.Count);
@@ -305,10 +305,10 @@ public class GameOrchestratorTests
 
         var updatedRoom = await orchestrator.ResignAsync("white-conn");
 
-        Assert.Equal(GameResult.BlackWon, updatedRoom.State.Result);
+        Assert.Equal(GameResult.BlackWonByResignation, updatedRoom.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
-        Assert.Equal(GameResult.BlackWon, gameEntity.Result);
+        Assert.Equal(GameResult.BlackWonByResignation, gameEntity.Result);
         Assert.NotNull(gameEntity.EndedAtUtc);
     }
 
@@ -441,7 +441,7 @@ public class GameOrchestratorTests
     }
 
     [Fact]
-    public async Task HandleDisconnectAsync_MidGame_ResignsDisconnectingPlayerAndPersists()
+    public async Task HandleDisconnectAsync_MidGame_AbandonsDisconnectingPlayerAndPersists()
     {
         var (orchestrator, repo) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
@@ -451,10 +451,10 @@ public class GameOrchestratorTests
         var result = await orchestrator.HandleDisconnectAsync("white-conn");
 
         Assert.NotNull(result);
-        Assert.Equal(GameResult.BlackWon, result!.State.Result);
+        Assert.Equal(GameResult.BlackWonByAbandonment, result!.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
-        Assert.Equal(GameResult.BlackWon, gameEntity.Result);
+        Assert.Equal(GameResult.BlackWonByAbandonment, gameEntity.Result);
         Assert.NotNull(gameEntity.EndedAtUtc);
     }
 

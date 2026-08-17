@@ -52,7 +52,15 @@ public class ChessGameSession
         if (Result != GameResult.Ongoing)
             throw new GameAlreadyEndedException();
 
-        Result = resigningTeam == Team.White ? GameResult.BlackWon : GameResult.WhiteWon;
+        Result = resigningTeam == Team.White ? GameResult.BlackWonByResignation : GameResult.WhiteWonByResignation;
+    }
+
+    public void Abandon(Team abandoningTeam)
+    {
+        if (Result != GameResult.Ongoing)
+            throw new GameAlreadyEndedException();
+
+        Result = abandoningTeam == Team.White ? GameResult.BlackWonByAbandonment : GameResult.WhiteWonByAbandonment;
     }
 
     public void AgreeToDraw()
@@ -72,7 +80,7 @@ public class ChessGameSession
     private void UpdateResult()
     {
         if (Board.IsCheckmate(CurrentTurn))
-            Result = CurrentTurn == Team.White ? GameResult.BlackWon : GameResult.WhiteWon;
+            Result = CurrentTurn == Team.White ? GameResult.BlackWonByCheckmate : GameResult.WhiteWonByCheckmate;
         else if (Board.IsStalemate(CurrentTurn))
             Result = GameResult.StalemateDraw;
         else if (HalfmoveClock >= FiftyMoveRuleHalfMoveLimit)

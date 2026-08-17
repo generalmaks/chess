@@ -3,8 +3,12 @@ namespace Chess.Logic;
 public enum GameResult
 {
     Ongoing,
-    WhiteWon,
-    BlackWon,
+    WhiteWonByCheckmate,
+    BlackWonByCheckmate,
+    WhiteWonByResignation,
+    BlackWonByResignation,
+    WhiteWonByAbandonment,
+    BlackWonByAbandonment,
     StalemateDraw,
     FiftyMoveRuleDraw,
     DrawByAgreement

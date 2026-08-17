@@ -20,7 +20,7 @@ public class ChessGameSessionTests
 
         session.MakeMove(new PieceMove(new PieceCord(0, 0), new PieceCord(0, 7)));
 
-        Assert.Equal(GameResult.WhiteWon, session.Result);
+        Assert.Equal(GameResult.WhiteWonByCheckmate, session.Result);
         Assert.Throws<GameAlreadyEndedException>(() =>
             session.MakeMove(new PieceMove(new PieceCord(4, 0), new PieceCord(4, 1))));
     }
@@ -121,7 +121,7 @@ public class ChessGameSessionTests
 
         session.Resign(Team.White);
 
-        Assert.Equal(GameResult.BlackWon, session.Result);
+        Assert.Equal(GameResult.BlackWonByResignation, session.Result);
         Assert.Throws<GameAlreadyEndedException>(() =>
             session.MakeMove(new PieceMove(new PieceCord(4, 6), new PieceCord(4, 5))));
     }
@@ -133,7 +133,7 @@ public class ChessGameSessionTests
 
         session.Resign(Team.Black);
 
-        Assert.Equal(GameResult.WhiteWon, session.Result);
+        Assert.Equal(GameResult.WhiteWonByResignation, session.Result);
     }
 
     [Fact]
@@ -155,6 +155,37 @@ public class ChessGameSessionTests
         Assert.Equal(GameResult.DrawByAgreement, session.Result);
         Assert.Throws<GameAlreadyEndedException>(() =>
             session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3))));
+    }
+
+    [Fact]
+    public void Abandon_WhiteAbandons_BlackWinsAndBlocksFurtherMoves()
+    {
+        var session = new ChessGameSession();
+
+        session.Abandon(Team.White);
+
+        Assert.Equal(GameResult.BlackWonByAbandonment, session.Result);
+        Assert.Throws<GameAlreadyEndedException>(() =>
+            session.MakeMove(new PieceMove(new PieceCord(4, 6), new PieceCord(4, 5))));
+    }
+
+    [Fact]
+    public void Abandon_BlackAbandons_WhiteWins()
+    {
+        var session = new ChessGameSession();
+
+        session.Abandon(Team.Black);
+
+        Assert.Equal(GameResult.WhiteWonByAbandonment, session.Result);
+    }
+
+    [Fact]
+    public void Abandon_GameAlreadyEnded_ThrowsGameAlreadyEndedException()
+    {
+        var session = new ChessGameSession();
+        session.Abandon(Team.White);
+
+        Assert.Throws<GameAlreadyEndedException>(() => session.Abandon(Team.Black));
     }
 
     [Fact]

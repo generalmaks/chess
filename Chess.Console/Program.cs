@@ -133,20 +133,17 @@ bool ConfirmAction(string prompt)
 
 string FormatResultMessage(GameResult result) => result switch
 {
-    GameResult.WhiteWon => FormatWinMessage(Team.White),
-    GameResult.BlackWon => FormatWinMessage(Team.Black),
+    GameResult.WhiteWonByCheckmate => "Checkmate! White wins. Press Q to quit.",
+    GameResult.BlackWonByCheckmate => "Checkmate! Black wins. Press Q to quit.",
+    GameResult.WhiteWonByResignation => "Black resigns. White wins. Press Q to quit.",
+    GameResult.BlackWonByResignation => "White resigns. Black wins. Press Q to quit.",
+    GameResult.WhiteWonByAbandonment => "Black abandoned the game. White wins. Press Q to quit.",
+    GameResult.BlackWonByAbandonment => "White abandoned the game. Black wins. Press Q to quit.",
     GameResult.StalemateDraw => "Stalemate! The game is a draw. Press Q to quit.",
     GameResult.FiftyMoveRuleDraw => "Draw by the fifty-move rule. Press Q to quit.",
     GameResult.DrawByAgreement => "Draw by agreement. Press Q to quit.",
     _ => string.Empty
 };
-
-string FormatWinMessage(Team winner)
-{
-    var loser = winner == Team.White ? Team.Black : Team.White;
-    var reason = session.Board.IsCheckmate(loser) ? "Checkmate! " : $"{loser} resigns. ";
-    return $"{reason}{winner} wins. Press Q to quit.";
-}
 
 char PromptPromotionChoice()
 {

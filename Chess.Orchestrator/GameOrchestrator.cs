@@ -102,7 +102,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         if (room is null || room.Session.Result != GameResult.Ongoing || !room.BothPlayersJoined)
             return null;
 
-        room.Session.Resign(connection.Team);
+        room.Session.Abandon(connection.Team);
         await EndGameAsync(room, ct);
 
         return room;
