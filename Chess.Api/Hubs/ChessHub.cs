@@ -69,7 +69,7 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
 
     private Guid GetPlayerId() => Guid.Parse(Context.User!.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
-    private static string GroupName(string gameId) => $"game-{gameId}";
+    internal static string GroupName(string gameId) => $"game-{gameId}";
     
     private static T Guarded<T>(Func<T> action)
     {

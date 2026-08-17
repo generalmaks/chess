@@ -5,7 +5,9 @@ using Chess.Api.Auth;
 using Chess.Api.Contracts;
 using Chess.Api.Hubs;
 using Chess.Api.Middleware;
+using Chess.Api.Services;
 using Chess.Dal;
+using Chess.Logic;
 using Chess.Logic.Pieces.Chess;
 using Chess.Orchestrator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -92,6 +94,7 @@ public class Startup(IConfiguration configuration)
         services.AddSingleton<GameStore>();
         services.AddScoped<IGameOrchestrator, GameOrchestrator>();
         services.AddScoped<IPlayerAuthenticator, PlayerAuthenticator>();
+        services.AddHostedService<GameClockService>();
     }
 
     public virtual void Configure(WebApplication app)
@@ -115,12 +118,13 @@ public class Startup(IConfiguration configuration)
 
         app.MapControllers();
 
-        app.MapPost("/games", async (IGameOrchestrator orchestrator, ClaimsPrincipal user, string? color) =>
+        app.MapPost("/games", async (IGameOrchestrator orchestrator, ClaimsPrincipal user, string? color, int? initialMinutes, int? incrementSeconds) =>
             {
                 var playerId = Guid.Parse(user.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
                 var preferredTeam = ParseColorPreference(color);
+                var timeControl = ParseTimeControl(initialMinutes, incrementSeconds);
 
-                var room = await orchestrator.CreateGameAsync(playerId, preferredTeam);
+                var room = await orchestrator.CreateGameAsync(playerId, preferredTeam, timeControl);
                 var assignedTeam = room.TeamForPlayer(playerId)!.Value;
 
                 return new CreateGameResponse(room.Id, assignedTeam.ToString());
@@ -130,11 +134,14 @@ public class Startup(IConfiguration configuration)
 
         app.MapHub<ChessHub>(ChessHubPath);
     }
-    
+
     private static Team? ParseColorPreference(string? color) => color?.Trim().ToLowerInvariant() switch
     {
         "white" => Team.White,
         "black" => Team.Black,
         _ => null,
     };
+
+    private static TimeControl? ParseTimeControl(int? initialMinutes, int? incrementSeconds) =>
+        initialMinutes is null ? null : TimeControl.Create(TimeSpan.FromMinutes(initialMinutes.Value), TimeSpan.FromSeconds(incrementSeconds ?? 0));
 }

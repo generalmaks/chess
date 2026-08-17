@@ -6,4 +6,9 @@ public record JoinGameResponse(string Team, GameStateDto State, bool OpponentJoi
 
 public record MoveRequest(int FromX, int FromY, int ToX, int ToY, char? Promotion);
 
-public record GameStateDto(string?[][] Board, string CurrentTurn, string Result);
+public record GameStateDto(
+    string?[][] Board,
+    string CurrentTurn,
+    string Result,
+    double? WhiteTimeRemainingSeconds,
+    double? BlackTimeRemainingSeconds);
