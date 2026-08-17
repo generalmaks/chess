@@ -15,29 +15,15 @@ public class AuthController(IPlayerAuthenticator authenticator, JwtTokenFactory 
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
-        try
-        {
-            var player = await authenticator.RegisterAsync(request.Username, request.Password);
-            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
-        }
-        catch (AuthException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var player = await authenticator.RegisterAsync(request.Username, request.Password);
+        return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
-        try
-        {
-            var player = await authenticator.LoginAsync(request.Username, request.Password);
-            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
-        }
-        catch (InvalidCredentialsException)
-        {
-            return Unauthorized();
-        }
+        var player = await authenticator.LoginAsync(request.Username, request.Password);
+        return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
     }
 
     [Authorize]
@@ -46,14 +32,7 @@ public class AuthController(IPlayerAuthenticator authenticator, JwtTokenFactory 
     {
         var playerId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
 
-        try
-        {
-            var player = await authenticator.RefreshAsync(playerId);
-            return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
-        }
-        catch (InvalidCredentialsException)
-        {
-            return Unauthorized();
-        }
+        var player = await authenticator.RefreshAsync(playerId);
+        return Ok(new AuthResponse(tokens.CreateToken(player), player.Username, player.EloRating));
     }
 }

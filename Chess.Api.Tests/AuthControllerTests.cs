@@ -45,6 +45,20 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     }
 
     [Fact]
+    public async Task Register_UnexpectedException_ReturnsInternalServerError()
+    {
+        var (_, authenticator) = factory.ResetMocks();
+        authenticator
+            .Setup(a => a.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest("whoever", "whatever1"));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Login_Success_ReturnsToken()
     {
         var (_, authenticator) = factory.ResetMocks();

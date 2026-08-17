@@ -4,6 +4,7 @@ using System.Text;
 using Chess.Api.Auth;
 using Chess.Api.Contracts;
 using Chess.Api.Hubs;
+using Chess.Api.Middleware;
 using Chess.Dal;
 using Chess.Logic.Pieces.Chess;
 using Chess.Orchestrator;
@@ -95,6 +96,8 @@ public class Startup(IConfiguration configuration)
 
     public virtual void Configure(WebApplication app)
     {
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
