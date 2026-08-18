@@ -39,6 +39,7 @@ export class Game implements OnInit, OnDestroy {
 
   protected readonly joinError = signal<string | null>(null);
   protected readonly selected = signal<{ x: number; y: number } | null>(null);
+  protected readonly copied = signal(false);
 
   protected readonly resultLabel = computed(() => RESULT_LABELS[this.game.result()] ?? this.game.result());
 
@@ -122,6 +123,17 @@ export class Game implements OnInit, OnDestroy {
     if (square.piece && ownsSquare(square.piece, this.game.myTeam())) {
       this.selected.set({ x: square.x, y: square.y });
     }
+  }
+
+  protected async copyGameId(): Promise<void> {
+    const gameId = this.game.gameId();
+    if (!gameId) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(gameId);
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 1500);
   }
 
   protected async resign(): Promise<void> {

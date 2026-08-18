@@ -20,6 +20,18 @@
                 {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
               }
             </p>
+            @if (!game.opponentJoined()) {
+              <div class="mt-1 flex items-center gap-2">
+                <code class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ game.gameId() }}</code>
+                <button
+                  type="button"
+                  (click)="copyGameId()"
+                  class="text-xs font-medium text-slate-500 hover:underline"
+                >
+                  {{ copied() ? 'Copied!' : 'Copy' }}
+                </button>
+              </div>
+            }
           } @else {
             <p class="text-sm font-semibold text-slate-800">{{ resultLabel() }}</p>
           }
