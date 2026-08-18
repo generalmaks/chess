@@ -211,6 +211,7 @@ public class ChessGameSessionTests
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+        session.StartClock();
 
         time.Advance(TimeSpan.FromSeconds(20));
 
@@ -219,10 +220,23 @@ public class ChessGameSessionTests
     }
 
     [Fact]
+    public void TimeRemaining_ClockNotStarted_DoesNotElapse()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(10));
+
+        Assert.Equal(TimeSpan.FromMinutes(5), session.TimeRemaining(Team.White));
+        Assert.Equal(TimeSpan.FromMinutes(5), session.TimeRemaining(Team.Black));
+    }
+
+    [Fact]
     public void MakeMove_DeductsSpentTimeAndAppliesIncrement()
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2)), time);
+        session.StartClock();
 
         time.Advance(TimeSpan.FromSeconds(10));
         session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)));
@@ -236,6 +250,7 @@ public class ChessGameSessionTests
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+        session.StartClock();
 
         time.Advance(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1));
 
@@ -248,8 +263,21 @@ public class ChessGameSessionTests
     {
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
         var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+        session.StartClock();
 
         time.Advance(TimeSpan.FromMinutes(1));
+
+        Assert.False(session.CheckTimeout());
+        Assert.Equal(GameResult.Ongoing, session.Result);
+    }
+
+    [Fact]
+    public void CheckTimeout_ClockNotStarted_ReturnsFalseEvenAfterFullDurationElapsed()
+    {
+        var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
+        var session = new ChessGameSession(TimeControl.Create(TimeSpan.FromMinutes(5), TimeSpan.Zero), time);
+
+        time.Advance(TimeSpan.FromMinutes(10));
 
         Assert.False(session.CheckTimeout());
         Assert.Equal(GameResult.Ongoing, session.Result);

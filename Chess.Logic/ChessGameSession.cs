@@ -13,6 +13,7 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
     private TimeSpan? _whiteTimeRemaining = timeControl?.InitialTime;
     private TimeSpan? _blackTimeRemaining = timeControl?.InitialTime;
     private DateTimeOffset _turnStartedAt = (timeProvider ?? TimeProvider.System).GetUtcNow();
+    private bool _clockRunning;
 
     public ChessBoard Board { get; } = new();
     public Team CurrentTurn { get; private set; } = Team.White;
@@ -34,14 +35,18 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
             return null;
 
         var stored = (team == Team.White ? _whiteTimeRemaining : _blackTimeRemaining)!.Value;
-        if (Result != GameResult.Ongoing || team != CurrentTurn)
+        if (!_clockRunning || Result != GameResult.Ongoing || team != CurrentTurn)
             return stored;
 
         var remaining = stored - (_timeProvider.GetUtcNow() - _turnStartedAt);
         return remaining < TimeSpan.Zero ? TimeSpan.Zero : remaining;
     }
 
-    public void StartClock() => _turnStartedAt = _timeProvider.GetUtcNow();
+    public void StartClock()
+    {
+        _turnStartedAt = _timeProvider.GetUtcNow();
+        _clockRunning = true;
+    }
 
     public bool CheckTimeout()
     {
