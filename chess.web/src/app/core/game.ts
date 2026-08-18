@@ -5,11 +5,21 @@ import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from './api-config';
 import { Auth } from './auth';
-import { CreateGameResponse, GameResult, GameStateDto, JoinGameResponse, MoveRequest, Team } from './models/game.models';
+import {
+  CreateGameResponse,
+  GameResult,
+  GameStateDto,
+  JoinGameResponse,
+  MoveRequest,
+  Team,
+  TimeControl,
+} from './models/game.models';
 
 // Well inside the backend's 60-minute JWT expiry, so a long-running game never
 // gets kicked mid-match while the token stored for reconnects goes stale.
 const TOKEN_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+
+const CLOCK_TICK_INTERVAL_MS = 200;
 
 @Service()
 export class Game {
@@ -18,6 +28,8 @@ export class Game {
 
   private connection: signalR.HubConnection | null = null;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private tickTimer: ReturnType<typeof setInterval> | null = null;
+  private stateReceivedAtMs = Date.now();
 
   private readonly gameIdSignal = signal<string | null>(null);
   private readonly myTeamSignal = signal<Team | null>(null);
@@ -27,6 +39,9 @@ export class Game {
   private readonly errorSignal = signal<string | null>(null);
   private readonly opponentJoinedSignal = signal(false);
   private readonly drawOfferedByOpponentSignal = signal(false);
+  private readonly whiteTimeRemainingBaseSignal = signal<number | null>(null);
+  private readonly blackTimeRemainingBaseSignal = signal<number | null>(null);
+  private readonly nowSignal = signal(Date.now());
 
   readonly gameId = this.gameIdSignal.asReadonly();
   readonly myTeam = this.myTeamSignal.asReadonly();
@@ -41,8 +56,18 @@ export class Game {
     () => this.result() === 'Ongoing' && this.opponentJoined() && this.currentTurn() === this.myTeam()
   );
 
-  createGame(color?: 'white' | 'black'): Promise<CreateGameResponse> {
-    const query = color ? `?color=${color}` : '';
+  readonly whiteTimeRemainingSeconds = computed(() => this.liveTimeRemaining('White'));
+  readonly blackTimeRemainingSeconds = computed(() => this.liveTimeRemaining('Black'));
+
+  createGame(color?: 'white' | 'black', timeControl?: TimeControl): Promise<CreateGameResponse> {
+    const params = new URLSearchParams();
+    if (color) params.set('color', color);
+    if (timeControl) {
+      params.set('initialMinutes', String(timeControl.initialMinutes));
+      params.set('incrementSeconds', String(timeControl.incrementSeconds));
+    }
+
+    const query = params.size > 0 ? `?${params.toString()}` : '';
     return firstValueFrom(this.http.post<CreateGameResponse>(`${API_BASE_URL}/games${query}`, {}));
   }
 
@@ -102,6 +127,10 @@ export class Game {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
+    if (this.tickTimer !== null) {
+      clearInterval(this.tickTimer);
+      this.tickTimer = null;
+    }
 
     await this.connection?.stop();
     this.connection = null;
@@ -113,6 +142,8 @@ export class Game {
     this.errorSignal.set(null);
     this.opponentJoinedSignal.set(false);
     this.drawOfferedByOpponentSignal.set(false);
+    this.whiteTimeRemainingBaseSignal.set(null);
+    this.blackTimeRemainingBaseSignal.set(null);
   }
 
   private async ensureConnected(): Promise<void> {
@@ -126,7 +157,11 @@ export class Game {
       .build();
 
     this.connection.on('StateUpdated', (state: GameStateDto) => this.applyState(state));
-    this.connection.on('PlayerJoined', () => this.opponentJoinedSignal.set(true));
+    this.connection.on('PlayerJoined', () => {
+      this.opponentJoinedSignal.set(true);
+      this.stateReceivedAtMs = Date.now();
+      this.nowSignal.set(this.stateReceivedAtMs);
+    });
     this.connection.on('DrawOffered', () => this.drawOfferedByOpponentSignal.set(true));
     this.connection.on('DrawDeclined', () => this.drawOfferedByOpponentSignal.set(false));
 
@@ -137,6 +172,27 @@ export class Game {
     this.boardSignal.set(state.board);
     this.currentTurnSignal.set(state.currentTurn);
     this.resultSignal.set(state.result);
+    this.whiteTimeRemainingBaseSignal.set(state.whiteTimeRemainingSeconds);
+    this.blackTimeRemainingBaseSignal.set(state.blackTimeRemainingSeconds);
+    this.stateReceivedAtMs = Date.now();
+    this.nowSignal.set(this.stateReceivedAtMs);
+
+    if (state.whiteTimeRemainingSeconds !== null && this.tickTimer === null) {
+      this.tickTimer = setInterval(() => this.nowSignal.set(Date.now()), CLOCK_TICK_INTERVAL_MS);
+    }
+  }
+
+  private liveTimeRemaining(team: Team): number | null {
+    const base = team === 'White' ? this.whiteTimeRemainingBaseSignal() : this.blackTimeRemainingBaseSignal();
+    if (base === null) {
+      return null;
+    }
+    if (!this.opponentJoinedSignal() || this.resultSignal() !== 'Ongoing' || this.currentTurnSignal() !== team) {
+      return base;
+    }
+
+    const elapsedSeconds = (this.nowSignal() - this.stateReceivedAtMs) / 1000;
+    return Math.max(0, base - elapsedSeconds);
   }
 }
 

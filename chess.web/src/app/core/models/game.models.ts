@@ -2,11 +2,22 @@ export type Team = 'White' | 'Black';
 
 export type GameResult =
   | 'Ongoing'
-  | 'WhiteWon'
-  | 'BlackWon'
+  | 'WhiteWonByCheckmate'
+  | 'BlackWonByCheckmate'
+  | 'WhiteWonByResignation'
+  | 'BlackWonByResignation'
+  | 'WhiteWonByAbandonment'
+  | 'BlackWonByAbandonment'
+  | 'WhiteWonOnTime'
+  | 'BlackWonOnTime'
   | 'StalemateDraw'
   | 'FiftyMoveRuleDraw'
   | 'DrawByAgreement';
+
+export interface TimeControl {
+  initialMinutes: number;
+  incrementSeconds: number;
+}
 
 export interface CreateGameResponse {
   gameId: string;
@@ -17,6 +28,8 @@ export interface GameStateDto {
   board: (string | null)[][];
   currentTurn: Team;
   result: GameResult;
+  whiteTimeRemainingSeconds: number | null;
+  blackTimeRemainingSeconds: number | null;
 }
 
 export interface JoinGameResponse {

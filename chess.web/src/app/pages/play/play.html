@@ -7,6 +7,24 @@
 
       <section class="mb-8">
         <h2 class="mb-3 text-sm font-medium text-slate-600">Start a new game</h2>
+
+        <div class="mb-3 grid grid-cols-4 gap-2">
+          @for (option of timeControlOptions; track option.label; let i = $index) {
+            <button
+              type="button"
+              (click)="selectedTimeControlIndex.set(i)"
+              class="rounded-md border py-1.5 text-xs font-medium hover:bg-slate-100"
+              [class.border-slate-800]="selectedTimeControlIndex() === i"
+              [class.bg-slate-800]="selectedTimeControlIndex() === i"
+              [class.text-white]="selectedTimeControlIndex() === i"
+              [class.border-slate-300]="selectedTimeControlIndex() !== i"
+              [class.text-slate-700]="selectedTimeControlIndex() !== i"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+
         <div class="grid grid-cols-3 gap-2">
           <button
             type="button"

@@ -12,8 +12,14 @@ interface Square {
 
 const RESULT_LABELS: Record<string, string> = {
   Ongoing: '',
-  WhiteWon: 'White wins',
-  BlackWon: 'Black wins',
+  WhiteWonByCheckmate: 'White wins by checkmate',
+  BlackWonByCheckmate: 'Black wins by checkmate',
+  WhiteWonByResignation: 'White wins by resignation',
+  BlackWonByResignation: 'Black wins by resignation',
+  WhiteWonByAbandonment: 'White wins, Black abandoned',
+  BlackWonByAbandonment: 'Black wins, White abandoned',
+  WhiteWonOnTime: 'White wins on time',
+  BlackWonOnTime: 'Black wins on time',
   StalemateDraw: 'Draw by stalemate',
   FiftyMoveRuleDraw: 'Draw by fifty-move rule',
   DrawByAgreement: 'Draw by agreement',
@@ -35,6 +41,15 @@ export class Game implements OnInit, OnDestroy {
   protected readonly selected = signal<{ x: number; y: number } | null>(null);
 
   protected readonly resultLabel = computed(() => RESULT_LABELS[this.game.result()] ?? this.game.result());
+
+  protected readonly myTimeRemaining = computed(() => this.timeRemainingFor(this.game.myTeam()));
+  protected readonly opponentTimeRemaining = computed(() => this.timeRemainingFor(this.opponentTeam()));
+
+  protected readonly myTimeLabel = computed(() => formatClock(this.myTimeRemaining()));
+  protected readonly opponentTimeLabel = computed(() => formatClock(this.opponentTimeRemaining()));
+
+  protected readonly isMyClockLow = computed(() => isLow(this.myTimeRemaining()));
+  protected readonly isOpponentClockLow = computed(() => isLow(this.opponentTimeRemaining()));
 
   protected readonly rows = computed<Square[][]>(() => {
     const board = this.game.board();
@@ -120,10 +135,39 @@ export class Game implements OnInit, OnDestroy {
   protected async respondToDraw(accept: boolean): Promise<void> {
     await this.game.respondToDraw(accept);
   }
+
+  private opponentTeam(): Team | null {
+    const team = this.game.myTeam();
+    if (!team) {
+      return null;
+    }
+    return team === 'White' ? 'Black' : 'White';
+  }
+
+  private timeRemainingFor(team: Team | null): number | null {
+    if (!team) {
+      return null;
+    }
+    return team === 'White' ? this.game.whiteTimeRemainingSeconds() : this.game.blackTimeRemainingSeconds();
+  }
 }
 
 function range(start: number, end: number): number[] {
   return Array.from({ length: end - start }, (_, i) => start + i);
+}
+
+function formatClock(seconds: number | null): string | null {
+  if (seconds === null) {
+    return null;
+  }
+  const total = Math.max(0, Math.ceil(seconds));
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+function isLow(seconds: number | null): boolean {
+  return seconds !== null && seconds < 30;
 }
 
 function ownsSquare(piece: string, team: Team | null): boolean {
