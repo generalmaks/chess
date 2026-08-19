@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from './api-config';
 import { Auth } from './auth';
+import { Board, BoardMove, moveToAlgebraicNotation } from './algebraic-notation';
 import {
   CreateGameResponse,
   GameResult,
@@ -42,12 +43,14 @@ export class Game {
   private readonly whiteTimeRemainingBaseSignal = signal<number | null>(null);
   private readonly blackTimeRemainingBaseSignal = signal<number | null>(null);
   private readonly nowSignal = signal(Date.now());
+  private readonly moveHistorySignal = signal<string[]>([]);
 
   readonly gameId = this.gameIdSignal.asReadonly();
   readonly myTeam = this.myTeamSignal.asReadonly();
   readonly board = this.boardSignal.asReadonly();
   readonly currentTurn = this.currentTurnSignal.asReadonly();
   readonly result = this.resultSignal.asReadonly();
+  readonly moveHistory = this.moveHistorySignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
   readonly opponentJoined = this.opponentJoinedSignal.asReadonly();
   readonly drawOfferedByOpponent = this.drawOfferedByOpponentSignal.asReadonly();
@@ -144,6 +147,7 @@ export class Game {
     this.drawOfferedByOpponentSignal.set(false);
     this.whiteTimeRemainingBaseSignal.set(null);
     this.blackTimeRemainingBaseSignal.set(null);
+    this.moveHistorySignal.set([]);
   }
 
   private async ensureConnected(): Promise<void> {
@@ -169,6 +173,9 @@ export class Game {
   }
 
   private applyState(state: GameStateDto): void {
+    const previousBoard = this.boardSignal();
+    const movedTeam = this.currentTurnSignal();
+
     this.boardSignal.set(state.board);
     this.currentTurnSignal.set(state.currentTurn);
     this.resultSignal.set(state.result);
@@ -177,8 +184,32 @@ export class Game {
     this.stateReceivedAtMs = Date.now();
     this.nowSignal.set(this.stateReceivedAtMs);
 
+    if (previousBoard && movedTeam) {
+      this.recordMove(previousBoard, movedTeam, state);
+    }
+
     if (state.whiteTimeRemainingSeconds !== null && this.tickTimer === null) {
       this.tickTimer = setInterval(() => this.nowSignal.set(Date.now()), CLOCK_TICK_INTERVAL_MS);
+    }
+  }
+
+  // Backend only ever pushes full board snapshots, so each move is reconstructed by
+  // diffing consecutive boards rather than received as an explicit from/to.
+  private recordMove(previousBoard: Board, movedTeam: Team, state: GameStateDto): void {
+    if (boardsEqual(previousBoard, state.board)) {
+      return;
+    }
+
+    const move = inferBoardMove(previousBoard, state.board, movedTeam);
+    if (!move) {
+      return;
+    }
+
+    try {
+      const san = moveToAlgebraicNotation(previousBoard, move, state.board, state.result);
+      this.moveHistorySignal.update((moves) => [...moves, san]);
+    } catch {
+      // Unreconstructable diff (e.g. joining mid-game with no prior snapshot); skip it.
     }
   }
 
@@ -201,4 +232,55 @@ function errorMessage(err: unknown): string {
     return err.message;
   }
   return 'Something went wrong.';
+}
+
+function boardsEqual(a: Board, b: Board): boolean {
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      if (a[x][y] !== b[x][y]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Recovers the from/to squares (and promotion, if any) the mover's team produced,
+// since the hub only ever broadcasts full board snapshots, never the move itself.
+function inferBoardMove(before: Board, after: Board, movedTeam: Team): BoardMove | null {
+  const prefix = movedTeam === 'White' ? 'w' : 'b';
+  const vacated: { x: number; y: number }[] = [];
+  const occupied: { x: number; y: number }[] = [];
+
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      const b = before[x][y];
+      const a = after[x][y];
+      if (b === a) continue;
+      if (b?.[0] === prefix && a === null) vacated.push({ x, y });
+      if (a?.[0] === prefix && b?.[0] !== prefix) occupied.push({ x, y });
+    }
+  }
+
+  let from: { x: number; y: number } | undefined;
+  let to: { x: number; y: number } | undefined;
+
+  if (vacated.length === 1 && occupied.length === 1) {
+    [from] = vacated;
+    [to] = occupied;
+  } else if (vacated.length === 2 && occupied.length === 2) {
+    // Castling: king and rook both vacate/land; the king square is the SAN move.
+    from = vacated.find((v) => before[v.x][v.y]?.[1] === 'K');
+    to = occupied.find((o) => after[o.x][o.y]?.[1] === 'K');
+  }
+
+  if (!from || !to) {
+    return null;
+  }
+
+  const fromType = before[from.x][from.y]?.[1];
+  const toType = after[to.x][to.y]?.[1];
+  const promotion = toType && toType !== fromType ? toType : undefined;
+
+  return { fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, promotion };
 }

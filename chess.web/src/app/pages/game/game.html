@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-slate-100 px-4 py-8">
-  <div class="mx-auto max-w-2xl">
+  <div class="mx-auto max-w-4xl">
     @if (!game.opponentJoined() || game.result() !== 'Ongoing') {
       <a routerLink="/play" class="mb-4 inline-block text-sm text-slate-500 hover:underline">&larr; Back to lobby</a>
     }
@@ -71,72 +71,93 @@
         <p class="mb-4 text-sm text-red-600">{{ game.error() }}</p>
       }
 
-      @if (opponentTimeLabel(); as time) {
-        <div class="mb-2 flex justify-end">
-          <span
-            class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
-            [class.bg-slate-800]="!isOpponentClockLow()"
-            [class.bg-red-600]="isOpponentClockLow()"
-          >
-            {{ time }}
-          </span>
-        </div>
-      }
-
-      <div class="flex">
-        <div class="flex w-6 flex-col">
-          @for (rank of rankLabels(); track rank) {
-            <div class="flex flex-1 items-center justify-center text-base font-semibold text-slate-500">
-              {{ rank }}
-            </div>
-          }
-        </div>
-
+      <div class="flex items-start gap-6">
         <div class="min-w-0 flex-1">
-          <div class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md">
-            @for (row of rows(); track row[0].y) {
-              @for (square of row; track square.x) {
-                <button
-                  type="button"
-                  (click)="onSquareClick(square)"
-                  class="flex aspect-square items-center justify-center p-1"
-                  [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
-                  [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
-                  [class.ring-4]="isSelected(square.x, square.y)"
-                  [class.ring-blue-400]="isSelected(square.x, square.y)"
-                >
-                  @if (pieceImage(square.piece); as src) {
-                    <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
-                  }
-                </button>
-              }
-            }
-          </div>
-        </div>
-      </div>
+          @if (opponentTimeLabel(); as time) {
+            <div class="mb-2 flex justify-end">
+              <span
+                class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
+                [class.bg-slate-800]="!isOpponentClockLow()"
+                [class.bg-red-600]="isOpponentClockLow()"
+              >
+                {{ time }}
+              </span>
+            </div>
+          }
 
-      <div class="flex">
-        <div class="w-6"></div>
-        <div class="grid min-w-0 flex-1 grid-cols-8">
-          @for (file of fileLabels(); track file) {
-            <div class="flex items-center justify-center pt-2 text-base font-semibold text-slate-500">
-              {{ file }}
+          <div class="flex">
+            <div class="flex w-6 flex-col">
+              @for (rank of rankLabels(); track rank) {
+                <div class="flex flex-1 items-center justify-center text-base font-semibold text-slate-500">
+                  {{ rank }}
+                </div>
+              }
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <div
+                class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md"
+              >
+                @for (row of rows(); track row[0].y) {
+                  @for (square of row; track square.x) {
+                    <button
+                      type="button"
+                      (click)="onSquareClick(square)"
+                      class="flex aspect-square items-center justify-center p-1"
+                      [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
+                      [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
+                      [class.ring-4]="isSelected(square.x, square.y)"
+                      [class.ring-blue-400]="isSelected(square.x, square.y)"
+                    >
+                      @if (pieceImage(square.piece); as src) {
+                        <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
+                      }
+                    </button>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="flex">
+            <div class="w-6"></div>
+            <div class="grid min-w-0 flex-1 grid-cols-8">
+              @for (file of fileLabels(); track file) {
+                <div class="flex items-center justify-center pt-2 text-base font-semibold text-slate-500">
+                  {{ file }}
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (myTimeLabel(); as time) {
+            <div class="mt-2 flex justify-end">
+              <span
+                class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
+                [class.bg-slate-800]="!isMyClockLow()"
+                [class.bg-red-600]="isMyClockLow()"
+              >
+                {{ time }}
+              </span>
             </div>
           }
         </div>
-      </div>
 
-      @if (myTimeLabel(); as time) {
-        <div class="mt-2 flex justify-end">
-          <span
-            class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
-            [class.bg-slate-800]="!isMyClockLow()"
-            [class.bg-red-600]="isMyClockLow()"
-          >
-            {{ time }}
-          </span>
-        </div>
-      }
+        <aside class="hidden w-56 shrink-0 rounded-lg border border-slate-300 bg-white shadow-md sm:block">
+          <h2 class="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700">Moves</h2>
+          <ol class="max-h-[28rem] overflow-y-auto px-3 py-2 text-sm">
+            @for (pair of movePairs(); track pair.number) {
+              <li class="flex gap-2 py-0.5">
+                <span class="w-5 shrink-0 text-slate-400">{{ pair.number }}.</span>
+                <span class="w-14 shrink-0 text-slate-800">{{ pair.white }}</span>
+                <span class="text-slate-800">{{ pair.black }}</span>
+              </li>
+            } @empty {
+              <li class="py-1 text-slate-400">No moves yet</li>
+            }
+          </ol>
+        </aside>
+      </div>
     }
   </div>
 </div>

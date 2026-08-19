@@ -10,6 +10,12 @@ interface Square {
   piece: string | null;
 }
 
+interface MovePair {
+  number: number;
+  white: string;
+  black: string | null;
+}
+
 const RESULT_LABELS: Record<string, string> = {
   Ongoing: '',
   WhiteWonByCheckmate: 'White wins by checkmate',
@@ -63,6 +69,15 @@ export class Game implements OnInit, OnDestroy {
     const files = flip ? range(0, 8).reverse() : range(0, 8);
 
     return ranks.map((y) => files.map((x) => ({ x, y, piece: board[x]?.[y] ?? null })));
+  });
+
+  protected readonly movePairs = computed<MovePair[]>(() => {
+    const moves = this.game.moveHistory();
+    const pairs: MovePair[] = [];
+    for (let i = 0; i < moves.length; i += 2) {
+      pairs.push({ number: i / 2 + 1, white: moves[i], black: moves[i + 1] ?? null });
+    }
+    return pairs;
   });
 
   protected readonly rankLabels = computed<number[]>(() => {
