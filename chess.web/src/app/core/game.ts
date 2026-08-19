@@ -44,6 +44,9 @@ export class Game {
   private readonly blackTimeRemainingBaseSignal = signal<number | null>(null);
   private readonly nowSignal = signal(Date.now());
   private readonly moveHistorySignal = signal<string[]>([]);
+  // positions[0] is the board when this client started observing; positions[i] (i >= 1)
+  // is the board right after moveHistory[i - 1]. Lets the UI jump back to any played ply.
+  private readonly positionsSignal = signal<Board[]>([]);
 
   readonly gameId = this.gameIdSignal.asReadonly();
   readonly myTeam = this.myTeamSignal.asReadonly();
@@ -51,6 +54,7 @@ export class Game {
   readonly currentTurn = this.currentTurnSignal.asReadonly();
   readonly result = this.resultSignal.asReadonly();
   readonly moveHistory = this.moveHistorySignal.asReadonly();
+  readonly positions = this.positionsSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
   readonly opponentJoined = this.opponentJoinedSignal.asReadonly();
   readonly drawOfferedByOpponent = this.drawOfferedByOpponentSignal.asReadonly();
@@ -148,6 +152,7 @@ export class Game {
     this.whiteTimeRemainingBaseSignal.set(null);
     this.blackTimeRemainingBaseSignal.set(null);
     this.moveHistorySignal.set([]);
+    this.positionsSignal.set([]);
   }
 
   private async ensureConnected(): Promise<void> {
@@ -184,7 +189,9 @@ export class Game {
     this.stateReceivedAtMs = Date.now();
     this.nowSignal.set(this.stateReceivedAtMs);
 
-    if (previousBoard && movedTeam) {
+    if (previousBoard === null) {
+      this.positionsSignal.set([state.board]);
+    } else if (movedTeam) {
       this.recordMove(previousBoard, movedTeam, state);
     }
 
@@ -208,6 +215,7 @@ export class Game {
     try {
       const san = moveToAlgebraicNotation(previousBoard, move, state.board, state.result);
       this.moveHistorySignal.update((moves) => [...moves, san]);
+      this.positionsSignal.update((positions) => [...positions, state.board]);
     } catch {
       // Unreconstructable diff (e.g. joining mid-game with no prior snapshot); skip it.
     }

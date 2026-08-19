@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { Game as GameService } from '../../core/game';
@@ -13,7 +13,9 @@ interface Square {
 interface MovePair {
   number: number;
   white: string;
+  whitePly: number;
   black: string | null;
+  blackPly: number | null;
 }
 
 const RESULT_LABELS: Record<string, string> = {
@@ -46,6 +48,34 @@ export class Game implements OnInit, OnDestroy {
   protected readonly joinError = signal<string | null>(null);
   protected readonly selected = signal<{ x: number; y: number } | null>(null);
   protected readonly copied = signal(false);
+  // null means "follow the live position"; a number pins the board to that ply.
+  protected readonly viewPly = signal<number | null>(null);
+
+  protected readonly isViewingHistory = computed(
+    () => this.viewPly() !== null && this.viewPly() !== this.game.moveHistory().length
+  );
+
+  protected readonly displayBoard = computed<(string | null)[][] | null>(() => {
+    const ply = this.viewPly();
+    return ply === null ? this.game.board() : (this.game.positions()[ply] ?? this.game.board());
+  });
+
+  constructor() {
+    // A pinned view only makes sense until the opponent moves — once they do, the
+    // position you were looking at is no longer "current" in any useful sense.
+    effect(() => {
+      const lastPly = this.game.moveHistory().length;
+      const myTeam = this.game.myTeam();
+      if (lastPly === 0 || !myTeam) {
+        return;
+      }
+
+      const moverTeam: Team = lastPly % 2 === 1 ? 'White' : 'Black';
+      if (moverTeam !== myTeam) {
+        this.viewPly.set(null);
+      }
+    });
+  }
 
   protected readonly resultLabel = computed(() => RESULT_LABELS[this.game.result()] ?? this.game.result());
 
@@ -59,7 +89,7 @@ export class Game implements OnInit, OnDestroy {
   protected readonly isOpponentClockLow = computed(() => isLow(this.opponentTimeRemaining()));
 
   protected readonly rows = computed<Square[][]>(() => {
-    const board = this.game.board();
+    const board = this.displayBoard();
     if (!board) {
       return [];
     }
@@ -75,7 +105,13 @@ export class Game implements OnInit, OnDestroy {
     const moves = this.game.moveHistory();
     const pairs: MovePair[] = [];
     for (let i = 0; i < moves.length; i += 2) {
-      pairs.push({ number: i / 2 + 1, white: moves[i], black: moves[i + 1] ?? null });
+      pairs.push({
+        number: i / 2 + 1,
+        white: moves[i],
+        whitePly: i + 1,
+        black: moves[i + 1] ?? null,
+        blackPly: moves[i + 1] !== undefined ? i + 2 : null,
+      });
     }
     return pairs;
   });
@@ -119,8 +155,18 @@ export class Game implements OnInit, OnDestroy {
     return sel !== null && sel.x === x && sel.y === y;
   }
 
+  protected viewMove(ply: number): void {
+    this.selected.set(null);
+    this.viewPly.set(ply === this.game.moveHistory().length ? null : ply);
+  }
+
+  protected returnToLive(): void {
+    this.selected.set(null);
+    this.viewPly.set(null);
+  }
+
   protected async onSquareClick(square: Square): Promise<void> {
-    if (!this.game.isMyTurn()) {
+    if (!this.game.isMyTurn() || this.isViewingHistory()) {
       return;
     }
 
