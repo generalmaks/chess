@@ -19,7 +19,11 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(gameId));
         await Clients.OthersInGroup(GroupName(gameId)).SendAsync("PlayerJoined", team.ToString());
 
-        return new JoinGameResponse(team.ToString(), GameStateMapper.ToDto(room.State), room.BothPlayersJoined);
+        return new JoinGameResponse(
+            team.ToString(),
+            GameStateMapper.ToDto(room.State),
+            room.BothPlayersJoined,
+            GameStateMapper.ToMoveHistoryDto(room.MoveHistory));
     }
 
     public async Task MakeMove(MoveRequest request)

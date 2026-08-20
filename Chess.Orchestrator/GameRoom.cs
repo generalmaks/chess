@@ -1,4 +1,5 @@
 using Chess.Logic;
+using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
 
 namespace Chess.Orchestrator;
@@ -16,6 +17,8 @@ public class GameRoom(string id, TimeControl? timeControl = null, TimeProvider? 
     internal ChessGameSession Session { get; } = new(timeControl, timeProvider);
 
     public GameStateSnapshot State => GameStateSnapshot.Capture(Session);
+
+    public IReadOnlyList<MoveRecord> MoveHistory => Session.Board.MoveHistory;
 
     public Guid? WhitePlayerId { get; private set; }
     public Guid? BlackPlayerId { get; private set; }
