@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Board, moveToAlgebraicNotation } from './algebraic-notation';
+import { Board, applyBoardMove, moveToAlgebraicNotation } from './algebraic-notation';
 
 function emptyBoard(): Board {
   return Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => null));
@@ -83,5 +83,62 @@ describe('moveToAlgebraicNotation', () => {
     expect(
       moveToAlgebraicNotation(before, { fromX: 3, fromY: 0, toX: 3, toY: 7 }, after, 'WhiteWonByCheckmate')
     ).toBe('Qd8#');
+  });
+});
+
+describe('applyBoardMove', () => {
+  it('moves a piece and clears its origin', () => {
+    const before = withPieces({ e2: 'wP' });
+    const after = applyBoardMove(before, { fromX: 4, fromY: 1, toX: 4, toY: 3 });
+    expect(after[4][3]).toBe('wP');
+    expect(after[4][1]).toBeNull();
+  });
+
+  it('removes the captured piece on a normal capture', () => {
+    const before = withPieces({ e4: 'wP', d5: 'bP' });
+    const after = applyBoardMove(before, { fromX: 4, fromY: 3, toX: 3, toY: 4 });
+    expect(after[3][4]).toBe('wP');
+  });
+
+  it('removes the victim pawn on en passant', () => {
+    const before = withPieces({ e5: 'wP', d5: 'bP' });
+    const after = applyBoardMove(before, { fromX: 4, fromY: 4, toX: 3, toY: 5 });
+    expect(after[3][5]).toBe('wP');
+    expect(after[3][4]).toBeNull();
+  });
+
+  it('moves the rook too on castling', () => {
+    const before = withPieces({ e1: 'wK', h1: 'wR' });
+    const after = applyBoardMove(before, { fromX: 4, fromY: 0, toX: 6, toY: 0 });
+    expect(after[6][0]).toBe('wK');
+    expect(after[5][0]).toBe('wR');
+    expect(after[7][0]).toBeNull();
+  });
+
+  it('places the promoted piece', () => {
+    const before = withPieces({ e7: 'wP' });
+    const after = applyBoardMove(before, { fromX: 4, fromY: 6, toX: 4, toY: 7, promotion: 'Q' });
+    expect(after[4][7]).toBe('wQ');
+  });
+
+  it('round-trips through moveToAlgebraicNotation for a short replayed game', () => {
+    let board = withPieces({
+      e2: 'wP',
+      e7: 'bP',
+      g1: 'wN',
+      b8: 'bN',
+    });
+    const moves = [
+      { fromX: 4, fromY: 1, toX: 4, toY: 3 }, // e4
+      { fromX: 4, fromY: 6, toX: 4, toY: 4 }, // e5
+      { fromX: 6, fromY: 0, toX: 5, toY: 2 }, // Nf3
+    ];
+    const sans = moves.map((move) => {
+      const next = applyBoardMove(board, move);
+      const san = moveToAlgebraicNotation(board, move, next, 'Ongoing');
+      board = next;
+      return san;
+    });
+    expect(sans).toEqual(['e4', 'e5', 'Nf3']);
   });
 });

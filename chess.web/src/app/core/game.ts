@@ -5,16 +5,28 @@ import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from './api-config';
 import { Auth } from './auth';
-import { Board, BoardMove, moveToAlgebraicNotation } from './algebraic-notation';
+import { Board, BoardMove, applyBoardMove, moveToAlgebraicNotation } from './algebraic-notation';
 import {
   CreateGameResponse,
   GameResult,
   GameStateDto,
   JoinGameResponse,
+  MoveHistoryEntryDto,
   MoveRequest,
   Team,
   TimeControl,
 } from './models/game.models';
+
+const INITIAL_BOARD: Board = [
+  ['wR', 'wP', null, null, null, null, 'bP', 'bR'],
+  ['wN', 'wP', null, null, null, null, 'bP', 'bN'],
+  ['wB', 'wP', null, null, null, null, 'bP', 'bB'],
+  ['wQ', 'wP', null, null, null, null, 'bP', 'bQ'],
+  ['wK', 'wP', null, null, null, null, 'bP', 'bK'],
+  ['wB', 'wP', null, null, null, null, 'bP', 'bB'],
+  ['wN', 'wP', null, null, null, null, 'bP', 'bN'],
+  ['wR', 'wP', null, null, null, null, 'bP', 'bR'],
+];
 
 // Well inside the backend's 60-minute JWT expiry, so a long-running game never
 // gets kicked mid-match while the token stored for reconnects goes stale.
@@ -87,6 +99,7 @@ export class Game {
     this.myTeamSignal.set(response.team);
     this.opponentJoinedSignal.set(response.opponentJoined);
     this.applyState(response.state);
+    this.replayHistory(response.moves, response.state.result);
 
     this.refreshTimer = setInterval(() => {
       firstValueFrom(this.auth.refresh()).catch(() => {});
@@ -219,6 +232,32 @@ export class Game {
     } catch {
       // Unreconstructable diff (e.g. joining mid-game with no prior snapshot); skip it.
     }
+  }
+
+  // Rebuilds moveHistory/positions from the persisted moves the hub returns on join,
+  // overwriting the single-entry arrays applyState just seeded above.
+  private replayHistory(moves: MoveHistoryEntryDto[], finalResult: GameResult): void {
+    let board = INITIAL_BOARD;
+    const positions: Board[] = [board];
+    const sans: string[] = [];
+
+    moves.forEach((entry, i) => {
+      const move: BoardMove = {
+        fromX: entry.fromX,
+        fromY: entry.fromY,
+        toX: entry.toX,
+        toY: entry.toY,
+        promotion: entry.promotedTo,
+      };
+      const next = applyBoardMove(board, move);
+      const resultAfter = i === moves.length - 1 ? finalResult : 'Ongoing';
+      sans.push(moveToAlgebraicNotation(board, move, next, resultAfter));
+      positions.push(next);
+      board = next;
+    });
+
+    this.positionsSignal.set(positions);
+    this.moveHistorySignal.set(sans);
   }
 
   private liveTimeRemaining(team: Team): number | null {

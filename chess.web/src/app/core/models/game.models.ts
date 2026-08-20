@@ -36,6 +36,15 @@ export interface JoinGameResponse {
   team: Team;
   state: GameStateDto;
   opponentJoined: boolean;
+  moves: MoveHistoryEntryDto[];
+}
+
+export interface MoveHistoryEntryDto {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  promotedTo: string | null;
 }
 
 export interface MoveRequest {
