@@ -6,15 +6,37 @@ namespace Chess.Dal;
 
 public class GameRepository(ChessDbContext db) : IGameRepository
 {
-    public async Task AddGameAsync(GameEntity game, CancellationToken ct = default)
+    public async Task AddGameAsync(NewGame game, CancellationToken ct = default)
     {
-        db.Games.Add(game);
+        db.Games.Add(new GameEntity
+        {
+            Id = game.Id,
+            CreatedAtUtc = game.CreatedAtUtc,
+            WhitePlayerId = game.WhitePlayerId,
+            BlackPlayerId = game.BlackPlayerId,
+        });
+
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task AddMoveAsync(MoveEntity move, CancellationToken ct = default)
+    public async Task AddMoveAsync(RecordedMove move, CancellationToken ct = default)
     {
-        db.Moves.Add(move);
+        db.Moves.Add(new MoveEntity
+        {
+            GameId = move.GameId,
+            Ply = move.Ply,
+            Team = move.Team,
+            PieceCode = move.PieceCode,
+            FromX = move.FromX,
+            FromY = move.FromY,
+            ToX = move.ToX,
+            ToY = move.ToY,
+            PromotionPieceCode = move.PromotionPieceCode,
+            IsCastling = move.IsCastling,
+            IsEnPassant = move.IsEnPassant,
+            PlayedAtUtc = move.PlayedAtUtc,
+        });
+
         await db.SaveChangesAsync(ct);
     }
 

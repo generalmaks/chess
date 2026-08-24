@@ -1,5 +1,3 @@
-using Chess.Dal;
-using Chess.Dal.Entities;
 using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
@@ -8,7 +6,7 @@ namespace Chess.Orchestrator;
 
 public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
 
-public class GameOrchestrator(GameStore store, IGameRepository repository, IPlayerRepository playerRepository, TimeProvider? timeProvider = null) : IGameOrchestrator
+public class GameOrchestrator(GameStore store, IGameRepository repository, Chess.Logic.IPlayerRepository playerRepository, TimeProvider? timeProvider = null) : IGameOrchestrator
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -17,7 +15,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
         var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
         var room = store.CreateGame(playerId, team, timeControl, _timeProvider);
 
-        await repository.AddGameAsync(new GameEntity
+        await repository.AddGameAsync(new NewGame
         {
             Id = Guid.Parse(room.Id),
             CreatedAtUtc = DateTime.UtcNow,
@@ -195,7 +193,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
     {
         var lastMove = room.Session.Board.MoveHistory[^1];
 
-        await repository.AddMoveAsync(new MoveEntity
+        await repository.AddMoveAsync(new RecordedMove
         {
             GameId = Guid.Parse(room.Id),
             Ply = room.Session.Board.MoveHistory.Count - 1,
