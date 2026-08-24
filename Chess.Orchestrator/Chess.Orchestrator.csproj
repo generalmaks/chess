@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Chess.Logic\Chess.Logic.csproj" />
-        <ProjectReference Include="..\Chess.Dal\Chess.Dal.csproj" />
     </ItemGroup>
 
     <ItemGroup>

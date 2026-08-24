@@ -1,5 +1,3 @@
-using Chess.Dal;
-using Chess.Dal.Entities;
 using Chess.Logic;
 using Chess.Logic.Pieces.Chess;
 using Moq;
@@ -13,17 +11,23 @@ public class MockGameRepository
     public Mock<IGameRepository> Mock { get; } = new();
     public IGameRepository Object => Mock.Object;
 
-    public List<GameEntity> AddedGames { get; } = [];
-    public List<MoveEntity> AddedMoves { get; } = [];
+    public List<TrackedGame> AddedGames { get; } = [];
+    public List<RecordedMove> AddedMoves { get; } = [];
 
     public MockGameRepository()
     {
-        Mock.Setup(r => r.AddGameAsync(It.IsAny<GameEntity>(), It.IsAny<CancellationToken>()))
-            .Callback<GameEntity, CancellationToken>((game, _) => AddedGames.Add(game))
+        Mock.Setup(r => r.AddGameAsync(It.IsAny<NewGame>(), It.IsAny<CancellationToken>()))
+            .Callback<NewGame, CancellationToken>((game, _) => AddedGames.Add(new TrackedGame
+            {
+                Id = game.Id,
+                CreatedAtUtc = game.CreatedAtUtc,
+                WhitePlayerId = game.WhitePlayerId,
+                BlackPlayerId = game.BlackPlayerId,
+            }))
             .Returns(Task.CompletedTask);
 
-        Mock.Setup(r => r.AddMoveAsync(It.IsAny<MoveEntity>(), It.IsAny<CancellationToken>()))
-            .Callback<MoveEntity, CancellationToken>((move, _) => AddedMoves.Add(move))
+        Mock.Setup(r => r.AddMoveAsync(It.IsAny<RecordedMove>(), It.IsAny<CancellationToken>()))
+            .Callback<RecordedMove, CancellationToken>((move, _) => AddedMoves.Add(move))
             .Returns(Task.CompletedTask);
 
         Mock.Setup(r => r.AssignPlayerAsync(It.IsAny<Guid>(), It.IsAny<Team>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))

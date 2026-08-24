@@ -1,5 +1,4 @@
-using Chess.Dal;
-using Chess.Dal.Entities;
+using Chess.Logic;
 using Moq;
 
 namespace Chess.Orchestrator.Tests.Support;
@@ -9,7 +8,7 @@ public class MockPlayerRepository
     public Mock<IPlayerRepository> Mock { get; } = new();
     public IPlayerRepository Object => Mock.Object;
 
-    public List<PlayerEntity> AddedPlayers { get; } = [];
+    public List<Player> AddedPlayers { get; } = [];
 
     public MockPlayerRepository()
     {
@@ -21,8 +20,8 @@ public class MockPlayerRepository
             .Returns<Guid, CancellationToken>((id, _) =>
                 Task.FromResult(AddedPlayers.SingleOrDefault(p => p.Id == id)));
 
-        Mock.Setup(r => r.AddPlayerAsync(It.IsAny<PlayerEntity>(), It.IsAny<CancellationToken>()))
-            .Callback<PlayerEntity, CancellationToken>((player, _) => AddedPlayers.Add(player))
+        Mock.Setup(r => r.AddPlayerAsync(It.IsAny<Player>(), It.IsAny<CancellationToken>()))
+            .Callback<Player, CancellationToken>((player, _) => AddedPlayers.Add(player))
             .Returns(Task.CompletedTask);
 
         Mock.Setup(r => r.UpdateRatingAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
