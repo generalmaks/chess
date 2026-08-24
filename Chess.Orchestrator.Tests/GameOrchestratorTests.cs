@@ -246,7 +246,7 @@ public class GameOrchestratorTests
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.Ongoing, gameEntity.Result);
         Assert.Null(gameEntity.EndedAtUtc);
-        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -389,7 +389,7 @@ public class GameOrchestratorTests
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.Ongoing, gameEntity.Result);
         Assert.Null(gameEntity.EndedAtUtc);
-        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -445,7 +445,7 @@ public class GameOrchestratorTests
 
         Assert.Null(result);
         Assert.Equal(GameResult.Ongoing, room.State.Result);
-        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -478,7 +478,26 @@ public class GameOrchestratorTests
         var result = await orchestrator.HandleDisconnectAsync("black-conn");
 
         Assert.Null(result);
-        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        repo.Mock.Verify(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResignAsync_RecordsEloBeforeAndAfterOnGameEntity()
+    {
+        var (orchestrator, gameRepository, _) = CreateOrchestratorWithPlayers(whiteRating: 1600, blackRating: 1200);
+        var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
+        await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
+        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+
+        await orchestrator.ResignAsync("white-conn");
+
+        var gameEntity = Assert.Single(gameRepository.AddedGames);
+        Assert.Equal(1600, gameEntity.WhiteEloBefore);
+        Assert.Equal(1200, gameEntity.BlackEloBefore);
+        Assert.NotNull(gameEntity.WhiteEloAfter);
+        Assert.NotNull(gameEntity.BlackEloAfter);
+        Assert.NotEqual(gameEntity.WhiteEloBefore, gameEntity.WhiteEloAfter);
+        Assert.NotEqual(gameEntity.BlackEloBefore, gameEntity.BlackEloAfter);
     }
 
     [Fact]

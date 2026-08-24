@@ -15,5 +15,10 @@ public class GameEntity
     public Guid? BlackPlayerId { get; set; }
     public PlayerEntity? BlackPlayer { get; set; }
 
+    public int? WhiteEloBefore { get; set; }
+    public int? BlackEloBefore { get; set; }
+    public int? WhiteEloAfter { get; set; }
+    public int? BlackEloAfter { get; set; }
+
     public List<MoveEntity> Moves { get; set; } = [];
 }

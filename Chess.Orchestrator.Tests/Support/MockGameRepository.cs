@@ -35,12 +35,23 @@ public class MockGameRepository
             })
             .Returns(Task.CompletedTask);
 
-        Mock.Setup(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .Callback<Guid, GameResult, DateTime, CancellationToken>((gameId, result, endedAtUtc, _) =>
+        Mock.Setup(r => r.SetStartingRatingsAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Callback<Guid, int, int, CancellationToken>((gameId, whiteEloBefore, blackEloBefore, _) =>
+            {
+                var game = AddedGames.Single(g => g.Id == gameId);
+                game.WhiteEloBefore = whiteEloBefore;
+                game.BlackEloBefore = blackEloBefore;
+            })
+            .Returns(Task.CompletedTask);
+
+        Mock.Setup(r => r.EndGameAsync(It.IsAny<Guid>(), It.IsAny<GameResult>(), It.IsAny<DateTime>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+            .Callback<Guid, GameResult, DateTime, int?, int?, CancellationToken>((gameId, result, endedAtUtc, whiteEloAfter, blackEloAfter, _) =>
             {
                 var game = AddedGames.Single(g => g.Id == gameId);
                 game.Result = result;
                 game.EndedAtUtc = endedAtUtc;
+                game.WhiteEloAfter = whiteEloAfter;
+                game.BlackEloAfter = blackEloAfter;
             })
             .Returns(Task.CompletedTask);
     }

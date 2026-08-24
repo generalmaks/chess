@@ -12,5 +12,7 @@ public interface IGameRepository
 
     Task AssignPlayerAsync(Guid gameId, Team team, Guid playerId, CancellationToken ct = default);
 
-    Task EndGameAsync(Guid gameId, GameResult result, DateTime endedAtUtc, CancellationToken ct = default);
+    Task SetStartingRatingsAsync(Guid gameId, int whiteEloBefore, int blackEloBefore, CancellationToken ct = default);
+
+    Task EndGameAsync(Guid gameId, GameResult result, DateTime endedAtUtc, int? whiteEloAfter = null, int? blackEloAfter = null, CancellationToken ct = default);
 }

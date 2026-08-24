@@ -29,13 +29,26 @@ public class GameRepository(ChessDbContext db) : IGameRepository
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task EndGameAsync(Guid gameId, GameResult result, DateTime endedAtUtc, CancellationToken ct = default)
+    public async Task SetStartingRatingsAsync(Guid gameId, int whiteEloBefore, int blackEloBefore, CancellationToken ct = default)
+    {
+        var game = await db.Games.FindAsync([gameId], ct)
+            ?? throw new InvalidOperationException($"Game {gameId} is missing from the database.");
+
+        game.WhiteEloBefore = whiteEloBefore;
+        game.BlackEloBefore = blackEloBefore;
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task EndGameAsync(Guid gameId, GameResult result, DateTime endedAtUtc, int? whiteEloAfter = null, int? blackEloAfter = null, CancellationToken ct = default)
     {
         var game = await db.Games.FindAsync([gameId], ct)
             ?? throw new InvalidOperationException($"Game {gameId} is missing from the database.");
 
         game.Result = result;
         game.EndedAtUtc = endedAtUtc;
+        game.WhiteEloAfter = whiteEloAfter;
+        game.BlackEloAfter = blackEloAfter;
 
         await db.SaveChangesAsync(ct);
     }

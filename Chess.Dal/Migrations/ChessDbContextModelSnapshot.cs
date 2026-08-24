@@ -28,6 +28,12 @@ namespace Chess.Dal.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("BlackEloAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BlackEloBefore")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("BlackPlayerId")
                         .HasColumnType("uuid");
 
@@ -41,6 +47,12 @@ namespace Chess.Dal.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<int?>("WhiteEloAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("WhiteEloBefore")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("WhitePlayerId")
                         .HasColumnType("uuid");

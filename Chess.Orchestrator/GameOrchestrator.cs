@@ -40,6 +40,9 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
                 room.Session.StartClock();
 
             await repository.AssignPlayerAsync(Guid.Parse(gameId), team.Value, playerId, ct);
+
+            if (room.BothPlayersJoined)
+                await RecordStartingRatingsAsync(Guid.Parse(gameId), room.WhitePlayerId!.Value, room.BlackPlayerId!.Value, ct);
         }
 
         store.RegisterConnection(connectionId, gameId, team.Value);
@@ -212,25 +215,40 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, IPlay
             await EndGameAsync(room, ct);
     }
 
-    private async Task EndGameAsync(GameRoom room, CancellationToken ct)
-    {
-        var result = room.Session.Result;
-        await repository.EndGameAsync(Guid.Parse(room.Id), result, DateTime.UtcNow, ct);
-
-        if (room.WhitePlayerId is { } whitePlayerId && room.BlackPlayerId is { } blackPlayerId)
-            await UpdateRatingsAsync(whitePlayerId, blackPlayerId, result, ct);
-    }
-
-    private async Task UpdateRatingsAsync(Guid whitePlayerId, Guid blackPlayerId, GameResult result, CancellationToken ct)
+    private async Task RecordStartingRatingsAsync(Guid gameId, Guid whitePlayerId, Guid blackPlayerId, CancellationToken ct)
     {
         var whitePlayer = await playerRepository.GetByIdAsync(whitePlayerId, ct);
         var blackPlayer = await playerRepository.GetByIdAsync(blackPlayerId, ct);
         if (whitePlayer is null || blackPlayer is null)
             return;
 
+        await repository.SetStartingRatingsAsync(gameId, whitePlayer.EloRating, blackPlayer.EloRating, ct);
+    }
+
+    private async Task EndGameAsync(GameRoom room, CancellationToken ct)
+    {
+        var result = room.Session.Result;
+
+        int? newWhiteRating = null;
+        int? newBlackRating = null;
+        if (room.WhitePlayerId is { } whitePlayerId && room.BlackPlayerId is { } blackPlayerId)
+            (newWhiteRating, newBlackRating) = await UpdateRatingsAsync(whitePlayerId, blackPlayerId, result, ct);
+
+        await repository.EndGameAsync(Guid.Parse(room.Id), result, DateTime.UtcNow, newWhiteRating, newBlackRating, ct);
+    }
+
+    private async Task<(int? WhiteRating, int? BlackRating)> UpdateRatingsAsync(Guid whitePlayerId, Guid blackPlayerId, GameResult result, CancellationToken ct)
+    {
+        var whitePlayer = await playerRepository.GetByIdAsync(whitePlayerId, ct);
+        var blackPlayer = await playerRepository.GetByIdAsync(blackPlayerId, ct);
+        if (whitePlayer is null || blackPlayer is null)
+            return (null, null);
+
         var (newWhiteRating, newBlackRating) = EloCalculator.CalculateNewRatings(whitePlayer.EloRating, blackPlayer.EloRating, result);
 
         await playerRepository.UpdateRatingAsync(whitePlayerId, newWhiteRating, ct);
         await playerRepository.UpdateRatingAsync(blackPlayerId, newBlackRating, ct);
+
+        return (newWhiteRating, newBlackRating);
     }
 }
