@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Chess.Orchestrator;
+using Chess.Logic;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -11,7 +11,7 @@ public class JwtTokenFactory(IOptions<JwtOptions> options)
 {
     private readonly JwtOptions _options = options.Value;
 
-    public string CreateToken(AuthenticatedPlayer player)
+    public string CreateToken(Player player)
     {
         var claims = new[]
         {

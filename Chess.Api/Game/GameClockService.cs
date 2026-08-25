@@ -1,5 +1,6 @@
 using Chess.Api.Contracts;
 using Chess.Api.Hubs;
+using Chess.Logic;
 using Chess.Orchestrator;
 using Microsoft.AspNetCore.SignalR;
 
@@ -18,12 +19,12 @@ public class GameClockService(IServiceScopeFactory scopeFactory, GameStore store
             {
                 await using var scope = scopeFactory.CreateAsyncScope();
                 var orchestrator = scope.ServiceProvider.GetRequiredService<IGameOrchestrator>();
-                var endedRoom = await orchestrator.CheckTimeoutAsync(room.Id, stoppingToken);
-                if (endedRoom is null)
+                var endedGame = await orchestrator.CheckTimeoutAsync(room.Id, stoppingToken);
+                if (endedGame is null)
                     continue;
 
-                await hubContext.Clients.Group(ChessHub.GroupName(endedRoom.Id))
-                    .SendAsync("StateUpdated", GameStateMapper.ToDto(endedRoom.State), stoppingToken);
+                await hubContext.Clients.Group(ChessHub.GroupName(endedGame.Id))
+                    .SendAsync("StateUpdated", GameStateMapper.ToDto(endedGame.State), stoppingToken);
             }
         }
     }

@@ -14,37 +14,37 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
 {
     public async Task<JoinGameResponse> JoinGame(string gameId)
     {
-        var (room, team) = await GuardedAsync(() => orchestrator.JoinAsync(Context.ConnectionId, gameId, GetPlayerId()));
+        var (game, team) = await GuardedAsync(() => orchestrator.JoinAsync(Context.ConnectionId, gameId, GetPlayerId()));
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(gameId));
         await Clients.OthersInGroup(GroupName(gameId)).SendAsync("PlayerJoined", team.ToString());
 
         return new JoinGameResponse(
             team.ToString(),
-            GameStateMapper.ToDto(room.State),
-            room.BothPlayersJoined,
-            GameStateMapper.ToMoveHistoryDto(room.MoveHistory));
+            GameStateMapper.ToDto(game.State),
+            game.BothPlayersJoined,
+            GameStateMapper.ToMoveHistoryDto(game.MoveHistory));
     }
 
     public async Task MakeMove(MoveRequest request)
     {
         var move = new PieceMove(new PieceCord(request.FromX, request.FromY), new PieceCord(request.ToX, request.ToY));
-        var room = await GuardedAsync(() => orchestrator.MakeMoveAsync(Context.ConnectionId, move, request.Promotion));
+        var game = await GuardedAsync(() => orchestrator.MakeMoveAsync(Context.ConnectionId, move, request.Promotion));
 
-        await Clients.Group(GroupName(room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(room.State));
+        await Clients.Group(GroupName(game.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(game.State));
     }
 
     public async Task Resign()
     {
-        var room = await GuardedAsync(() => orchestrator.ResignAsync(Context.ConnectionId));
+        var game = await GuardedAsync(() => orchestrator.ResignAsync(Context.ConnectionId));
 
-        await Clients.Group(GroupName(room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(room.State));
+        await Clients.Group(GroupName(game.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(game.State));
     }
 
     public async Task OfferDraw()
     {
-        var (room, team) = Guarded(() => orchestrator.OfferDraw(Context.ConnectionId));
-        await Clients.OthersInGroup(GroupName(room.Id)).SendAsync("DrawOffered", team.ToString());
+        var (game, team) = Guarded(() => orchestrator.OfferDraw(Context.ConnectionId));
+        await Clients.OthersInGroup(GroupName(game.Id)).SendAsync("DrawOffered", team.ToString());
     }
 
     public async Task RespondToDraw(bool accept)
@@ -53,19 +53,19 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
 
         if (!result.Accepted)
         {
-            await Clients.Group(GroupName(result.Room.Id)).SendAsync("DrawDeclined");
+            await Clients.Group(GroupName(result.Game.Id)).SendAsync("DrawDeclined");
             return;
         }
 
-        await Clients.Group(GroupName(result.Room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(result.Room.State));
+        await Clients.Group(GroupName(result.Game.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(result.Game.State));
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var room = await orchestrator.HandleDisconnectAsync(Context.ConnectionId);
-        if (room is not null)
+        var game = await orchestrator.HandleDisconnectAsync(Context.ConnectionId);
+        if (game is not null)
         {
-            await Clients.Group(GroupName(room.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(room.State));
+            await Clients.Group(GroupName(game.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(game.State));
         }
 
         await base.OnDisconnectedAsync(exception);

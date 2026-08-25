@@ -93,7 +93,7 @@ public class Startup(IConfiguration configuration)
     {
         services.AddSingleton<GameStore>();
         services.AddScoped<IGameOrchestrator, GameOrchestrator>();
-        services.AddScoped<IPlayerAuthenticator, PlayerAuthenticator>();
+        services.AddScoped<IPlayerOrchestrator, PlayerOrchestrator>();
         services.AddHostedService<GameClockService>();
     }
 
