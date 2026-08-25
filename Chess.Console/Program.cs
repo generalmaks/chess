@@ -1,6 +1,6 @@
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 
 var session = new ChessGameSession();
 var cursor = new PieceCord(4, 1);

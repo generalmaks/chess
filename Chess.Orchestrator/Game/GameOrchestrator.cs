@@ -1,8 +1,9 @@
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
+using Chess.Model.Player;
 
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Game;
 
 public class GameOrchestrator(
     GameStore store, 
@@ -12,7 +13,7 @@ public class GameOrchestrator(
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
-    public async Task<Game> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default)
+    public async Task<Model.Chess.Game.Game> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default)
     {
         var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
         var room = store.CreateGame(playerId, team, timeControl, _timeProvider);
@@ -28,7 +29,7 @@ public class GameOrchestrator(
         return room.ToGame();
     }
 
-    public async Task<(Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
+    public async Task<(Model.Chess.Game.Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId) ?? throw new GameNotFoundException();
 
@@ -49,7 +50,7 @@ public class GameOrchestrator(
         return (room.ToGame(), team.Value);
     }
 
-    public async Task<Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
+    public async Task<Model.Chess.Game.Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
         if (!room.BothPlayersJoined)
@@ -76,7 +77,7 @@ public class GameOrchestrator(
         }
     }
 
-    public async Task<Game> ResignAsync(string connectionId, CancellationToken ct = default)
+    public async Task<Model.Chess.Game.Game> ResignAsync(string connectionId, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
 
@@ -94,7 +95,7 @@ public class GameOrchestrator(
         }
     }
 
-    public (Game Game, Team Team) OfferDraw(string connectionId)
+    public (Model.Chess.Game.Game Game, Team Team) OfferDraw(string connectionId)
     {
         var (room, team) = GetActiveConnection(connectionId);
         room.DrawOfferedBy = team;
@@ -128,7 +129,7 @@ public class GameOrchestrator(
         }
     }
 
-    public async Task<Game?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
+    public async Task<Model.Chess.Game.Game?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
     {
         var connection = store.GetConnection(connectionId);
         store.RemoveConnection(connectionId);
@@ -158,7 +159,7 @@ public class GameOrchestrator(
         }
     }
 
-    public async Task<Game?> CheckTimeoutAsync(string gameId, CancellationToken ct = default)
+    public async Task<Model.Chess.Game.Game?> CheckTimeoutAsync(string gameId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId);
         if (room is null)

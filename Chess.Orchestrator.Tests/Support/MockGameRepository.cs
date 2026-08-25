@@ -1,5 +1,5 @@
-using Chess.Logic;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 using Moq;
 
 namespace Chess.Orchestrator.Tests.Support;

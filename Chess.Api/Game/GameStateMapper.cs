@@ -1,7 +1,7 @@
-using Chess.Logic;
-using Chess.Logic.Board;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
 
-namespace Chess.Api.Contracts;
+namespace Chess.Api.Game;
 
 public static class GameStateMapper
 {

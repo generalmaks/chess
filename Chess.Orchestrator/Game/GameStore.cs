@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using Chess.Logic;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Game;
 
 public record PlayerConnection(string GameId, Team Team);
 

@@ -1,4 +1,6 @@
-using Chess.Dal.Entities;
+using Chess.Dal.Chess;
+using Chess.Dal.Move;
+using Chess.Dal.Player;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chess.Dal;

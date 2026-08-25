@@ -1,3 +1,4 @@
+using Chess.Orchestrator.Player;
 using Chess.Orchestrator.Tests.Support;
 
 namespace Chess.Orchestrator.Tests;

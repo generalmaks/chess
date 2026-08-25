@@ -1,4 +1,4 @@
-namespace Chess.Api.Contracts;
+namespace Chess.Api.Player;
 
 public record RegisterRequest(string Username, string Password);
 

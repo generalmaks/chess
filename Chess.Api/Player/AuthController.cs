@@ -1,12 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Chess.Api.Auth;
-using Chess.Api.Contracts;
-using Chess.Logic;
+using Chess.Model.Player;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Chess.Api.Controllers;
+namespace Chess.Api.Player;
 
 [ApiController]
 [Route("auth")]

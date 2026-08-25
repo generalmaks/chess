@@ -1,24 +1,23 @@
-using Chess.Dal.Entities;
-using Chess.Logic;
+using Chess.Model.Player;
 using Microsoft.EntityFrameworkCore;
 
-namespace Chess.Dal;
+namespace Chess.Dal.Player;
 
 public class PlayerRepository(ChessDbContext db) : IPlayerRepository
 {
-    public async Task<Player?> GetByUsernameAsync(string username, CancellationToken ct = default)
+    public async Task<Model.Player.Player?> GetByUsernameAsync(string username, CancellationToken ct = default)
     {
         var entity = await db.Players.AsNoTracking().SingleOrDefaultAsync(p => p.Username == username, ct);
         return entity is null ? null : ToPlayer(entity);
     }
 
-    public async Task<Player?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Model.Player.Player?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await db.Players.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id, ct);
         return entity is null ? null : ToPlayer(entity);
     }
 
-    public async Task AddPlayerAsync(Player player, CancellationToken ct = default)
+    public async Task AddPlayerAsync(Model.Player.Player player, CancellationToken ct = default)
     {
         db.Players.Add(new PlayerDao
         {
@@ -40,7 +39,7 @@ public class PlayerRepository(ChessDbContext db) : IPlayerRepository
         await db.SaveChangesAsync(ct);
     }
 
-    private static Player ToPlayer(PlayerDao dao) => new()
+    private static Model.Player.Player ToPlayer(PlayerDao dao) => new()
     {
         Id = dao.Id,
         Username = dao.Username,

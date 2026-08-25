@@ -1,4 +1,4 @@
-namespace Chess.Api.Auth;
+namespace Chess.Api.Player;
 
 public class JwtOptions
 {

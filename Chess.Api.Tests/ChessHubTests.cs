@@ -1,9 +1,8 @@
-using Chess.Api.Contracts;
+using Chess.Api.Game;
 using Chess.Api.Tests.Support;
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Logic.Pieces.Chess;
-using Chess.Orchestrator;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Pieces.Chess;
+using Chess.Orchestrator.Game;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;

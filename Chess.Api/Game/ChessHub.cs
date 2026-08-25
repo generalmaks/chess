@@ -1,13 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Chess.Api.Contracts;
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Orchestrator;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
+using Chess.Orchestrator.Game;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Chess.Api.Hubs;
+namespace Chess.Api.Game;
 
 [Authorize]
 public class ChessHub(IGameOrchestrator orchestrator) : Hub

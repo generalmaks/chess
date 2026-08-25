@@ -1,4 +1,4 @@
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Player;
 
 public abstract class AuthException(string message) : Exception(message);
 

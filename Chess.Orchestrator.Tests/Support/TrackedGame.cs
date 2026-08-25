@@ -1,4 +1,4 @@
-using Chess.Logic;
+using Chess.Model.Chess.Game;
 
 namespace Chess.Orchestrator.Tests.Support;
 

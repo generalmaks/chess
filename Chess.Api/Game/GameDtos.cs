@@ -1,4 +1,4 @@
-namespace Chess.Api.Contracts;
+namespace Chess.Api.Game;
 
 public record CreateGameResponse(string GameId, string Team);
 

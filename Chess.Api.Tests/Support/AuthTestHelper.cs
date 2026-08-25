@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
-using Chess.Api.Contracts;
-using Chess.Logic;
+using Chess.Api.Player;
+using Chess.Model.Player;
 using Moq;
 
 namespace Chess.Api.Tests.Support;
@@ -19,7 +19,7 @@ public static class AuthTestHelper
         var playerId = Guid.NewGuid();
         orchestrator
             .Setup(a => a.RegisterAsync(username, password, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Player
+            .ReturnsAsync(new Model.Player.Player
             {
                 Id = playerId,
                 Username = username,

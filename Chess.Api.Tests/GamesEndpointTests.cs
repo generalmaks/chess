@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Chess.Api.Contracts;
+using Chess.Api.Game;
 using Chess.Api.Tests.Support;
-using Chess.Logic;
-using Chess.Logic.Pieces.Chess;
-using Chess.Orchestrator;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
+using Chess.Orchestrator.Game;
 using Moq;
 
 namespace Chess.Api.Tests;

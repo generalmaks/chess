@@ -1,4 +1,4 @@
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Game;
 
 public abstract class GameOrchestrationException(string message) : Exception(message);
 

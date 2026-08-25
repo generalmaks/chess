@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Console", "Chess.Console\Chess.Console.csproj", "{FCF54596-5B71-4FEF-B770-F9F9DE27B4E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Logic", "Chess.Logic\Chess.Logic.csproj", "{0A96A966-37DA-4D30-9123-6DC98DE00728}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Model", "Chess.Model\Chess.Model.csproj", "{0A96A966-37DA-4D30-9123-6DC98DE00728}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Logic.Tests", "Chess.Logic.Tests\Chess.Logic.Tests.csproj", "{2D98B315-57BD-4BF0-A2ED-119477B40BB6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Model.Tests", "Chess.Model.Tests\Chess.Model.Tests.csproj", "{2D98B315-57BD-4BF0-A2ED-119477B40BB6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chess.Api", "Chess.Api\Chess.Api.csproj", "{5597A49C-45C0-4873-AA45-F1A8F4FEC947}"
 EndProject

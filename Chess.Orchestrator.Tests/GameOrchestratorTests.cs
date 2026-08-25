@@ -1,6 +1,7 @@
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
+using Chess.Orchestrator.Game;
 using Chess.Orchestrator.Tests.Support;
 using Moq;
 
@@ -24,8 +25,8 @@ public class GameOrchestratorTests
     {
         var gameRepository = new MockGameRepository();
         var playerRepository = new MockPlayerRepository();
-        playerRepository.AddedPlayers.Add(new Player { Id = WhitePlayerId, Username = "white", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = whiteRating });
-        playerRepository.AddedPlayers.Add(new Player { Id = BlackPlayerId, Username = "black", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = blackRating });
+        playerRepository.AddedPlayers.Add(new Model.Player.Player { Id = WhitePlayerId, Username = "white", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = whiteRating });
+        playerRepository.AddedPlayers.Add(new Model.Player.Player { Id = BlackPlayerId, Username = "black", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = blackRating });
 
         var orchestrator = new GameOrchestrator(new GameStore(), gameRepository.Object, playerRepository.Object);
         return (orchestrator, gameRepository, playerRepository);

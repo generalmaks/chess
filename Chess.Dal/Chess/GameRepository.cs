@@ -1,8 +1,8 @@
-using Chess.Dal.Entities;
-using Chess.Logic;
-using Chess.Logic.Pieces.Chess;
+using Chess.Dal.Move;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 
-namespace Chess.Dal;
+namespace Chess.Dal.Chess;
 
 public class GameRepository(ChessDbContext db) : IGameRepository
 {

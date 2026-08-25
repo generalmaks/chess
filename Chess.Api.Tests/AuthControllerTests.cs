@@ -1,9 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using Chess.Api.Contracts;
+using Chess.Api.Player;
 using Chess.Api.Tests.Support;
-using Chess.Logic;
-using Chess.Orchestrator;
+using Chess.Orchestrator.Player;
 using Moq;
 
 namespace Chess.Api.Tests;
@@ -16,7 +15,7 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
         var (_, orchestrator) = factory.ResetMocks();
         orchestrator
             .Setup(a => a.RegisterAsync("newplayer", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Player { Id = Guid.NewGuid(), Username = "newplayer", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
+            .ReturnsAsync(new Model.Player.Player { Id = Guid.NewGuid(), Username = "newplayer", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest("newplayer", "password123"));
@@ -65,7 +64,7 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
         var (_, orchestrator) = factory.ResetMocks();
         orchestrator
             .Setup(a => a.LoginAsync("player", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Player { Id = Guid.NewGuid(), Username = "player", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
+            .ReturnsAsync(new Model.Player.Player { Id = Guid.NewGuid(), Username = "player", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/login", new LoginRequest("player", "password123"));

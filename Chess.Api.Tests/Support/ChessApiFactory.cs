@@ -1,4 +1,5 @@
-using Chess.Logic;
+using Chess.Model.Chess.Game;
+using Chess.Model.Player;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;

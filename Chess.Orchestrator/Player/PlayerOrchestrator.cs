@@ -1,10 +1,10 @@
-using Chess.Logic;
+using Chess.Model.Player;
 
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Player;
 
 public class PlayerOrchestrator(IPlayerRepository repository) : IPlayerOrchestrator
 {
-    public async Task<Player> RegisterAsync(string username, string password, CancellationToken ct = default)
+    public async Task<Model.Player.Player> RegisterAsync(string username, string password, CancellationToken ct = default)
     {
         username = username.Trim();
 
@@ -17,7 +17,7 @@ public class PlayerOrchestrator(IPlayerRepository repository) : IPlayerOrchestra
         if (await repository.GetByUsernameAsync(username, ct) is not null)
             throw new UsernameTakenException();
 
-        var player = new Player
+        var player = new Model.Player.Player
         {
             Id = Guid.NewGuid(),
             Username = username,
@@ -29,7 +29,7 @@ public class PlayerOrchestrator(IPlayerRepository repository) : IPlayerOrchestra
         return player;
     }
 
-    public async Task<Player> LoginAsync(string username, string password, CancellationToken ct = default)
+    public async Task<Model.Player.Player> LoginAsync(string username, string password, CancellationToken ct = default)
     {
         var player = await repository.GetByUsernameAsync(username.Trim(), ct);
         if (player is null || !BCrypt.Net.BCrypt.Verify(password, player.PasswordHash))
@@ -38,6 +38,6 @@ public class PlayerOrchestrator(IPlayerRepository repository) : IPlayerOrchestra
         return player;
     }
 
-    public async Task<Player> RefreshAsync(Guid playerId, CancellationToken ct = default) =>
+    public async Task<Model.Player.Player> RefreshAsync(Guid playerId, CancellationToken ct = default) =>
         await repository.GetByIdAsync(playerId, ct) ?? throw new InvalidCredentialsException();
 }

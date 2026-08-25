@@ -1,6 +1,8 @@
-using Chess.Logic;
+using Chess.Dal.Move;
+using Chess.Dal.Player;
+using Chess.Model.Chess.Game;
 
-namespace Chess.Dal.Entities;
+namespace Chess.Dal.Chess;
 
 public class GameDao
 {

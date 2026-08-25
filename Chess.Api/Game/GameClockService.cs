@@ -1,10 +1,8 @@
-using Chess.Api.Contracts;
-using Chess.Api.Hubs;
-using Chess.Logic;
-using Chess.Orchestrator;
+using Chess.Model.Chess.Game;
+using Chess.Orchestrator.Game;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Chess.Api.Services;
+namespace Chess.Api.Game;
 
 public class GameClockService(IServiceScopeFactory scopeFactory, GameStore store, IHubContext<ChessHub> hubContext) : BackgroundService
 {

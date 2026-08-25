@@ -1,4 +1,4 @@
-using Chess.Orchestrator;
+using Chess.Orchestrator.Player;
 
 namespace Chess.Api.Middleware;
 

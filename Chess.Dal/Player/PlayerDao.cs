@@ -1,4 +1,6 @@
-namespace Chess.Dal.Entities;
+using Chess.Dal.Chess;
+
+namespace Chess.Dal.Player;
 
 public class PlayerDao
 {

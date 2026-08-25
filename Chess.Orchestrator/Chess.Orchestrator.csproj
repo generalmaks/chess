@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Chess.Logic\Chess.Logic.csproj" />
+        <ProjectReference Include="..\Chess.Model\Chess.Model.csproj" />
     </ItemGroup>
 
     <ItemGroup>

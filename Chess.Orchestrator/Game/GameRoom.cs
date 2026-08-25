@@ -1,8 +1,8 @@
-using Chess.Logic;
-using Chess.Logic.Board;
-using Chess.Logic.Pieces.Chess;
+using Chess.Model.Chess.Board;
+using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 
-namespace Chess.Orchestrator;
+namespace Chess.Orchestrator.Game;
 
 public class GameRoom(string id, TimeControl? timeControl = null, TimeProvider? timeProvider = null)
 {
@@ -51,5 +51,5 @@ public class GameRoom(string id, TimeControl? timeControl = null, TimeProvider? 
         }
     }
 
-    internal Game ToGame() => new(Id, State, BothPlayersJoined, WhitePlayerId, BlackPlayerId, DrawOfferedBy, MoveHistory);
+    internal Model.Chess.Game.Game ToGame() => new(Id, State, BothPlayersJoined, WhitePlayerId, BlackPlayerId, DrawOfferedBy, MoveHistory);
 }
