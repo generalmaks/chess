@@ -1,6 +1,4 @@
-using Chess.Logic;
-
-namespace Chess.Orchestrator;
+namespace Chess.Logic;
 
 public static class EloCalculator
 {
