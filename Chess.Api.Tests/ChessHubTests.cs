@@ -1,5 +1,6 @@
 using Chess.Api.Contracts;
 using Chess.Api.Tests.Support;
+using Chess.Logic;
 using Chess.Logic.Board;
 using Chess.Logic.Pieces.Chess;
 using Chess.Orchestrator;
@@ -25,13 +26,13 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
     [Fact]
     public async Task JoinGame_Creator_ReturnsCreatorsSeatedTeam()
     {
-        var (orchestrator, authenticator) = factory.ResetMocks();
-        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(factory.CreateClient(), authenticator);
+        var (orchestrator, playerOrchestrator) = factory.ResetMocks();
+        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(factory.CreateClient(), playerOrchestrator);
         var gameId = Guid.NewGuid().ToString();
         var room = new GameRoom(gameId);
         orchestrator
             .Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, playerId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((room, Team.White));
+            .ReturnsAsync((room.ToGame(), Team.White));
 
         var connection = await ConnectAsync(token);
         var joined = await connection.InvokeAsync<JoinGameResponse>("JoinGame", gameId);
@@ -42,15 +43,15 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
     [Fact]
     public async Task JoinGame_SecondPlayer_ClaimsRemainingSeat()
     {
-        var (orchestrator, authenticator) = factory.ResetMocks();
+        var (orchestrator, playerOrchestrator) = factory.ResetMocks();
         var client = factory.CreateClient();
         var gameId = Guid.NewGuid().ToString();
         var room = new GameRoom(gameId);
 
-        var (creatorToken, creatorId, _) = await AuthTestHelper.RegisterAsync(client, authenticator);
-        var (joinerToken, joinerId, _) = await AuthTestHelper.RegisterAsync(client, authenticator);
-        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, creatorId, It.IsAny<CancellationToken>())).ReturnsAsync((room, Team.White));
-        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, joinerId, It.IsAny<CancellationToken>())).ReturnsAsync((room, Team.Black));
+        var (creatorToken, creatorId, _) = await AuthTestHelper.RegisterAsync(client, playerOrchestrator);
+        var (joinerToken, joinerId, _) = await AuthTestHelper.RegisterAsync(client, playerOrchestrator);
+        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, creatorId, It.IsAny<CancellationToken>())).ReturnsAsync((room.ToGame(), Team.White));
+        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, joinerId, It.IsAny<CancellationToken>())).ReturnsAsync((room.ToGame(), Team.Black));
 
         var creatorConnection = await ConnectAsync(creatorToken);
         await creatorConnection.InvokeAsync<JoinGameResponse>("JoinGame", gameId);
@@ -64,8 +65,8 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
     [Fact]
     public async Task JoinGame_ThirdPlayer_ThrowsHubException()
     {
-        var (orchestrator, authenticator) = factory.ResetMocks();
-        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(factory.CreateClient(), authenticator);
+        var (orchestrator, playerOrchestrator) = factory.ResetMocks();
+        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(factory.CreateClient(), playerOrchestrator);
         var gameId = Guid.NewGuid().ToString();
         orchestrator
             .Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, playerId, It.IsAny<CancellationToken>()))
@@ -88,15 +89,15 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
     [Fact]
     public async Task MakeMove_LegalMove_BroadcastsUpdatedStateWithSwitchedTurn()
     {
-        var (orchestrator, authenticator) = factory.ResetMocks();
+        var (orchestrator, playerOrchestrator) = factory.ResetMocks();
         var client = factory.CreateClient();
         var gameId = Guid.NewGuid().ToString();
         var room = new GameRoom(gameId);
 
-        var (whiteToken, whiteId, _) = await AuthTestHelper.RegisterAsync(client, authenticator);
-        var (blackToken, blackId, _) = await AuthTestHelper.RegisterAsync(client, authenticator);
-        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, whiteId, It.IsAny<CancellationToken>())).ReturnsAsync((room, Team.White));
-        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, blackId, It.IsAny<CancellationToken>())).ReturnsAsync((room, Team.Black));
+        var (whiteToken, whiteId, _) = await AuthTestHelper.RegisterAsync(client, playerOrchestrator);
+        var (blackToken, blackId, _) = await AuthTestHelper.RegisterAsync(client, playerOrchestrator);
+        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, whiteId, It.IsAny<CancellationToken>())).ReturnsAsync((room.ToGame(), Team.White));
+        orchestrator.Setup(o => o.JoinAsync(It.IsAny<string>(), gameId, blackId, It.IsAny<CancellationToken>())).ReturnsAsync((room.ToGame(), Team.Black));
 
         var whiteConnection = await ConnectAsync(whiteToken);
         await whiteConnection.InvokeAsync<JoinGameResponse>("JoinGame", gameId);
@@ -107,7 +108,7 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
         room.Session.MakeMove(new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)), null);
         orchestrator
             .Setup(o => o.MakeMoveAsync(It.IsAny<string>(), It.IsAny<PieceMove>(), null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(room);
+            .ReturnsAsync(room.ToGame());
 
         var stateUpdated = new TaskCompletionSource<GameStateDto>();
         blackConnection.On<GameStateDto>("StateUpdated", state => stateUpdated.TrySetResult(state));

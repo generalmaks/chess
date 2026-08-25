@@ -1,4 +1,4 @@
-using Chess.Orchestrator;
+using Chess.Logic;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -10,7 +10,7 @@ public class ChessApiFactory : WebApplicationFactory<Program>
     public class Switchboard
     {
         public IGameOrchestrator GameOrchestrator { get; set; } = Mock.Of<IGameOrchestrator>();
-        public IPlayerAuthenticator Authenticator { get; set; } = Mock.Of<IPlayerAuthenticator>();
+        public IPlayerOrchestrator PlayerOrchestrator { get; set; } = Mock.Of<IPlayerOrchestrator>();
     }
 
     public ChessApiFactory()
@@ -20,12 +20,12 @@ public class ChessApiFactory : WebApplicationFactory<Program>
 
     public Switchboard Mocks => Services.GetRequiredService<Switchboard>();
 
-    public (Mock<IGameOrchestrator> Orchestrator, Mock<IPlayerAuthenticator> Authenticator) ResetMocks()
+    public (Mock<IGameOrchestrator> GameOrchestrator, Mock<IPlayerOrchestrator> PlayerOrchestrator) ResetMocks()
     {
-        var orchestrator = new Mock<IGameOrchestrator>();
-        var authenticator = new Mock<IPlayerAuthenticator>();
-        Mocks.GameOrchestrator = orchestrator.Object;
-        Mocks.Authenticator = authenticator.Object;
-        return (orchestrator, authenticator);
+        var gameOrchestrator = new Mock<IGameOrchestrator>();
+        var playerOrchestrator = new Mock<IPlayerOrchestrator>();
+        Mocks.GameOrchestrator = gameOrchestrator.Object;
+        Mocks.PlayerOrchestrator = playerOrchestrator.Object;
+        return (gameOrchestrator, playerOrchestrator);
     }
 }

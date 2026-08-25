@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Chess.Api.Contracts;
 using Chess.Api.Tests.Support;
+using Chess.Logic;
 using Chess.Orchestrator;
 using Moq;
 
@@ -12,10 +13,10 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [Fact]
     public async Task Register_Success_ReturnsTokenAndUsername()
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.RegisterAsync("newplayer", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "newplayer", 1200));
+            .ReturnsAsync(new Player { Id = Guid.NewGuid(), Username = "newplayer", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest("newplayer", "password123"));
@@ -33,8 +34,8 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [InlineData(typeof(WeakPasswordException))]
     public async Task Register_AuthException_ReturnsBadRequest(Type exceptionType)
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync((AuthException)Activator.CreateInstance(exceptionType)!);
         var client = factory.CreateClient();
@@ -47,8 +48,8 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [Fact]
     public async Task Register_UnexpectedException_ReturnsInternalServerError()
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
         var client = factory.CreateClient();
@@ -61,10 +62,10 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [Fact]
     public async Task Login_Success_ReturnsToken()
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.LoginAsync("player", "password123", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(Guid.NewGuid(), "player", 1200));
+            .ReturnsAsync(new Player { Id = Guid.NewGuid(), Username = "player", PasswordHash = "hash", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/auth/login", new LoginRequest("player", "password123"));
@@ -77,8 +78,8 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [Fact]
     public async Task Login_WrongPassword_ReturnsUnauthorized()
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidCredentialsException());
         var client = factory.CreateClient();
@@ -91,8 +92,8 @@ public class AuthControllerTests(ChessApiFactory factory) : IClassFixture<ChessA
     [Fact]
     public async Task Login_UnknownUsername_ReturnsUnauthorized()
     {
-        var (_, authenticator) = factory.ResetMocks();
-        authenticator
+        var (_, orchestrator) = factory.ResetMocks();
+        orchestrator
             .Setup(a => a.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidCredentialsException());
         var client = factory.CreateClient();

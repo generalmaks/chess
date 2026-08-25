@@ -1,4 +1,4 @@
-using Chess.Orchestrator;
+using Chess.Logic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +14,6 @@ public class TestStartup(IConfiguration configuration) : Startup(configuration)
     {
         services.AddSingleton<ChessApiFactory.Switchboard>();
         services.AddScoped<IGameOrchestrator>(sp => sp.GetRequiredService<ChessApiFactory.Switchboard>().GameOrchestrator);
-        services.AddScoped<IPlayerAuthenticator>(sp => sp.GetRequiredService<ChessApiFactory.Switchboard>().Authenticator);
+        services.AddScoped<IPlayerOrchestrator>(sp => sp.GetRequiredService<ChessApiFactory.Switchboard>().PlayerOrchestrator);
     }
 }

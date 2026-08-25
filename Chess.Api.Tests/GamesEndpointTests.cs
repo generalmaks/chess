@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Chess.Api.Contracts;
 using Chess.Api.Tests.Support;
+using Chess.Logic;
 using Chess.Logic.Pieces.Chess;
 using Chess.Orchestrator;
 using Moq;
@@ -32,7 +33,7 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         room.SeatCreator(playerId, team);
         orchestrator
             .Setup(o => o.CreateGameAsync(playerId, team, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(room);
+            .ReturnsAsync(room.ToGame());
 
         var response = await client.PostAsync($"/games?color={colorParam}", null);
 
@@ -50,7 +51,7 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         room.SeatCreator(playerId, Team.White);
         orchestrator
             .Setup(o => o.CreateGameAsync(playerId, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(room);
+            .ReturnsAsync(room.ToGame());
 
         var response = await client.PostAsync("/games", null);
 
@@ -62,10 +63,10 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
 
     private async Task<(HttpClient Client, Guid PlayerId, Mock<IGameOrchestrator> Orchestrator)> AuthenticatedClientAsync()
     {
-        var (orchestrator, authenticator) = factory.ResetMocks();
+        var (gameOrchestrator, playerOrchestrator) = factory.ResetMocks();
         var client = factory.CreateClient();
-        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(client, authenticator);
+        var (token, playerId, _) = await AuthTestHelper.RegisterAsync(client, playerOrchestrator);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return (client, playerId, orchestrator);
+        return (client, playerId, gameOrchestrator);
     }
 }

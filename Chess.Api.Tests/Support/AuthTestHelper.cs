@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using Chess.Api.Contracts;
-using Chess.Orchestrator;
+using Chess.Logic;
 using Moq;
 
 namespace Chess.Api.Tests.Support;
@@ -11,15 +11,22 @@ public static class AuthTestHelper
 
     public static async Task<(string Token, Guid PlayerId, string Username)> RegisterAsync(
         HttpClient client,
-        Mock<IPlayerAuthenticator> authenticator,
+        Mock<IPlayerOrchestrator> orchestrator,
         string? username = null,
         string password = "password123")
     {
         username ??= RandomUsername();
         var playerId = Guid.NewGuid();
-        authenticator
+        orchestrator
             .Setup(a => a.RegisterAsync(username, password, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AuthenticatedPlayer(playerId, username, 1200));
+            .ReturnsAsync(new Player
+            {
+                Id = playerId,
+                Username = username,
+                PasswordHash = "hash",
+                CreatedAtUtc = DateTime.UtcNow,
+                EloRating = 1200,
+            });
 
         var response = await client.PostAsJsonAsync("/auth/register", new RegisterRequest(username, password));
         if (!response.IsSuccessStatusCode)
