@@ -1,17 +1,9 @@
 using Chess.Orchestrator.Player;
-using Chess.Orchestrator.Tests.Support;
 
-namespace Chess.Orchestrator.Tests;
+namespace Chess.Orchestrator.Tests.Player;
 
-public class PlayerOrchestratorTests
+public class RegisterAsyncTests : PlayerOrchestratorTestBase
 {
-    private static (PlayerOrchestrator Orchestrator, MockPlayerRepository Repository) CreatePlayerOrchestrator()
-    {
-        var repository = new MockPlayerRepository();
-        var orchestrator = new PlayerOrchestrator(repository.Object);
-        return (orchestrator, repository);
-    }
-
     [Fact]
     public async Task RegisterAsync_ValidCredentials_PersistsHashedPasswordAndReturnsPlayer()
     {
@@ -52,34 +44,5 @@ public class PlayerOrchestratorTests
         var (orchestrator, _) = CreatePlayerOrchestrator();
 
         await Assert.ThrowsAsync<WeakPasswordException>(() => orchestrator.RegisterAsync("magnus", "short"));
-    }
-
-    [Fact]
-    public async Task LoginAsync_CorrectCredentials_ReturnsPlayer()
-    {
-        var (orchestrator, _) = CreatePlayerOrchestrator();
-        var registered = await orchestrator.RegisterAsync("magnus", "hunter2pass");
-
-        var result = await orchestrator.LoginAsync("magnus", "hunter2pass");
-
-        Assert.Equal(registered.Id, result.Id);
-        Assert.Equal("magnus", result.Username);
-    }
-
-    [Fact]
-    public async Task LoginAsync_WrongPassword_ThrowsInvalidCredentialsException()
-    {
-        var (orchestrator, _) = CreatePlayerOrchestrator();
-        await orchestrator.RegisterAsync("magnus", "hunter2pass");
-
-        await Assert.ThrowsAsync<InvalidCredentialsException>(() => orchestrator.LoginAsync("magnus", "wrongpassword"));
-    }
-
-    [Fact]
-    public async Task LoginAsync_UnknownUsername_ThrowsInvalidCredentialsException()
-    {
-        var (orchestrator, _) = CreatePlayerOrchestrator();
-
-        await Assert.ThrowsAsync<InvalidCredentialsException>(() => orchestrator.LoginAsync("ghost", "hunter2pass"));
     }
 }
