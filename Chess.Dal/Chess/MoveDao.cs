@@ -2,12 +2,12 @@ using Chess.Logic.Pieces.Chess;
 
 namespace Chess.Dal.Entities;
 
-public class MoveEntity
+public class MoveDao
 {
     public long Id { get; set; }
 
     public Guid GameId { get; set; }
-    public GameEntity Game { get; set; } = null!;
+    public GameDao Game { get; set; } = null!;
 
     // 0-based order within the game; white moves on even plies, black on odd.
     public int Ply { get; set; }

@@ -8,7 +8,7 @@ public class GameRepository(ChessDbContext db) : IGameRepository
 {
     public async Task AddGameAsync(NewGame game, CancellationToken ct = default)
     {
-        db.Games.Add(new GameEntity
+        db.Games.Add(new GameDao
         {
             Id = game.Id,
             CreatedAtUtc = game.CreatedAtUtc,
@@ -21,7 +21,7 @@ public class GameRepository(ChessDbContext db) : IGameRepository
 
     public async Task AddMoveAsync(RecordedMove move, CancellationToken ct = default)
     {
-        db.Moves.Add(new MoveEntity
+        db.Moves.Add(new MoveDao
         {
             GameId = move.GameId,
             Ply = move.Ply,

@@ -5,21 +5,21 @@ namespace Chess.Dal;
 
 public class ChessDbContext(DbContextOptions<ChessDbContext> options) : DbContext(options)
 {
-    public DbSet<PlayerEntity> Players => Set<PlayerEntity>();
-    public DbSet<GameEntity> Games => Set<GameEntity>();
-    public DbSet<MoveEntity> Moves => Set<MoveEntity>();
+    public DbSet<PlayerDao> Players => Set<PlayerDao>();
+    public DbSet<GameDao> Games => Set<GameDao>();
+    public DbSet<MoveDao> Moves => Set<MoveDao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<PlayerEntity>(entity =>
+        modelBuilder.Entity<PlayerDao>(entity =>
         {
             entity.Property(p => p.Username).HasMaxLength(32);
             entity.Property(p => p.PasswordHash).HasMaxLength(256);
-            entity.Property(p => p.EloRating).HasDefaultValue(PlayerEntity.DefaultEloRating);
+            entity.Property(p => p.EloRating).HasDefaultValue(PlayerDao.DefaultEloRating);
             entity.HasIndex(p => p.Username).IsUnique();
         });
 
-        modelBuilder.Entity<GameEntity>(entity =>
+        modelBuilder.Entity<GameDao>(entity =>
         {
             entity.Property(g => g.Result).HasConversion<string>().HasMaxLength(32);
 
@@ -39,7 +39,7 @@ public class ChessDbContext(DbContextOptions<ChessDbContext> options) : DbContex
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<MoveEntity>(entity =>
+        modelBuilder.Entity<MoveDao>(entity =>
         {
             entity.Property(m => m.Team).HasConversion<string>().HasMaxLength(8);
 
