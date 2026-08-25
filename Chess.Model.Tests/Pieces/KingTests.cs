@@ -64,4 +64,99 @@ public class KingTests
         Assert.Contains(moves, m => m.To == new PieceCord(4, 5));
         Assert.Equal(8, moves.Length);
     }
+
+    private static ChessBoard SetupCastlingBoard(out King king, out Rook kingSideRook, out Rook queenSideRook)
+    {
+        var board = TestBoard.Empty();
+        king = new King(Team.White);
+        kingSideRook = new Rook(Team.White);
+        queenSideRook = new Rook(Team.White);
+        board.Place(king, 4, 0);
+        board.Place(kingSideRook, 7, 0);
+        board.Place(queenSideRook, 0, 0);
+        return board;
+    }
+
+    [Fact]
+    public void PossibleMoves_ClearPathBothSides_IncludesBothCastlingMoves()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.Contains(moves, m => m.To == new PieceCord(6, 0));
+        Assert.Contains(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_PieceBetweenKingAndRook_ExcludesThatSideCastle()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+        board.Place(new Bishop(Team.White), 5, 0);
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(6, 0));
+        Assert.Contains(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_KingAlreadyMoved_ExcludesCastling()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+        king.HasMoved = true;
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(6, 0));
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_RookAlreadyMoved_ExcludesThatSideCastle()
+    {
+        var board = SetupCastlingBoard(out var king, out var kingSideRook, out _);
+        kingSideRook.HasMoved = true;
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(6, 0));
+        Assert.Contains(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_KingInCheck_ExcludesCastling()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+        board.Place(new Rook(Team.Black), 4, 7);
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(6, 0));
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_SquareKingPassesThroughIsAttacked_ExcludesThatSideCastle()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+        board.Place(new Rook(Team.Black), 5, 7);
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(6, 0));
+        Assert.Contains(moves, m => m.To == new PieceCord(2, 0));
+    }
+
+    [Fact]
+    public void PossibleMoves_LandingSquareIsAttacked_ExcludesThatSideCastle()
+    {
+        var board = SetupCastlingBoard(out var king, out _, out _);
+        board.Place(new Rook(Team.Black), 2, 7);
+
+        var moves = king.PossibleMoves(board, new PieceCord(4, 0));
+
+        Assert.DoesNotContain(moves, m => m.To == new PieceCord(2, 0));
+        Assert.Contains(moves, m => m.To == new PieceCord(6, 0));
+    }
 }

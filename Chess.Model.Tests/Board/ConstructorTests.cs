@@ -1,9 +1,9 @@
 using Chess.Model.Chess.Board;
 using Chess.Model.Chess.Pieces.Chess;
 
-namespace Chess.Model.Tests;
+namespace Chess.Model.Tests.Board;
 
-public class ChessBoardTests
+public class ConstructorTests
 {
     [Fact]
     public void ChessBoard_CreateBoard_PutsAllPiecesInCorrectPlace()
