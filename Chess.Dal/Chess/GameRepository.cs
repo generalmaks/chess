@@ -1,4 +1,3 @@
-using Chess.Dal.Move;
 using Chess.Model.Chess.Game;
 using Chess.Model.Chess.Pieces.Chess;
 

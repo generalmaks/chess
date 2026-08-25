@@ -1,7 +1,6 @@
-using Chess.Dal.Chess;
 using Chess.Model.Chess.Pieces.Chess;
 
-namespace Chess.Dal.Move;
+namespace Chess.Dal.Chess;
 
 public class MoveDao
 {
