@@ -50,4 +50,6 @@ public class GameRoom(string id, TimeControl? timeControl = null, TimeProvider? 
             return null;
         }
     }
+
+    internal Game ToGame() => new(Id, State, BothPlayersJoined, WhitePlayerId, BlackPlayerId, DrawOfferedBy, MoveHistory);
 }

@@ -4,13 +4,15 @@ using Chess.Logic.Pieces.Chess;
 
 namespace Chess.Orchestrator;
 
-public readonly record struct DrawResponseResult(GameRoom Room, bool Accepted);
-
-public class GameOrchestrator(GameStore store, IGameRepository repository, Chess.Logic.IPlayerRepository playerRepository, TimeProvider? timeProvider = null) : IGameOrchestrator
+public class GameOrchestrator(
+    GameStore store, 
+    IGameRepository repository, 
+    IPlayerRepository playerRepository, 
+    TimeProvider? timeProvider = null) : IGameOrchestrator
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
-    public async Task<GameRoom> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default)
+    public async Task<Game> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default)
     {
         var team = preferredTeam ?? (Random.Shared.Next(2) == 0 ? Team.White : Team.Black);
         var room = store.CreateGame(playerId, team, timeControl, _timeProvider);
@@ -23,10 +25,10 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
             BlackPlayerId = room.BlackPlayerId,
         }, ct);
 
-        return room;
+        return room.ToGame();
     }
 
-    public async Task<(GameRoom Room, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
+    public async Task<(Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId) ?? throw new GameNotFoundException();
 
@@ -44,10 +46,10 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         }
 
         store.RegisterConnection(connectionId, gameId, team.Value);
-        return (room, team.Value);
+        return (room.ToGame(), team.Value);
     }
 
-    public async Task<GameRoom> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
+    public async Task<Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
         if (!room.BothPlayersJoined)
@@ -66,7 +68,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
             room.DrawOfferedBy = null;
 
             await PersistMoveAsync(room, team, ct);
-            return room;
+            return room.ToGame();
         }
         finally
         {
@@ -74,7 +76,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         }
     }
 
-    public async Task<GameRoom> ResignAsync(string connectionId, CancellationToken ct = default)
+    public async Task<Game> ResignAsync(string connectionId, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);
 
@@ -84,7 +86,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
             await EndIfTimedOutAsync(room, ct);
             room.Session.Resign(team);
             await EndGameAsync(room, ct);
-            return room;
+            return room.ToGame();
         }
         finally
         {
@@ -92,11 +94,11 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         }
     }
 
-    public (GameRoom Room, Team Team) OfferDraw(string connectionId)
+    public (Game Game, Team Team) OfferDraw(string connectionId)
     {
         var (room, team) = GetActiveConnection(connectionId);
         room.DrawOfferedBy = team;
-        return (room, team);
+        return (room.ToGame(), team);
     }
 
     public async Task<DrawResponseResult> RespondToDrawAsync(string connectionId, bool accept, CancellationToken ct = default)
@@ -113,12 +115,12 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
             room.DrawOfferedBy = null;
 
             if (!accept)
-                return new DrawResponseResult(room, Accepted: false);
+                return new DrawResponseResult(room.ToGame(), Accepted: false);
 
             room.Session.AgreeToDraw();
             await EndGameAsync(room, ct);
 
-            return new DrawResponseResult(room, Accepted: true);
+            return new DrawResponseResult(room.ToGame(), Accepted: true);
         }
         finally
         {
@@ -126,7 +128,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         }
     }
 
-    public async Task<GameRoom?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
+    public async Task<Game?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default)
     {
         var connection = store.GetConnection(connectionId);
         store.RemoveConnection(connectionId);
@@ -142,13 +144,13 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         try
         {
             if (await EndIfTimedOutAsync(room, ct))
-                return room;
+                return room.ToGame();
             if (room.Session.Result != GameResult.Ongoing)
                 return null;
 
             room.Session.Abandon(connection.Team);
             await EndGameAsync(room, ct);
-            return room;
+            return room.ToGame();
         }
         finally
         {
@@ -156,7 +158,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         }
     }
 
-    public async Task<GameRoom?> CheckTimeoutAsync(string gameId, CancellationToken ct = default)
+    public async Task<Game?> CheckTimeoutAsync(string gameId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId);
         if (room is null)
@@ -165,7 +167,7 @@ public class GameOrchestrator(GameStore store, IGameRepository repository, Chess
         await room.MutationLock.WaitAsync(ct);
         try
         {
-            return await EndIfTimedOutAsync(room, ct) ? room : null;
+            return await EndIfTimedOutAsync(room, ct) ? room.ToGame() : null;
         }
         finally
         {

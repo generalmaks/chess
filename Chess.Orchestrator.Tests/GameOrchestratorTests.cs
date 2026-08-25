@@ -101,9 +101,9 @@ public class GameOrchestratorTests
         var (orchestrator, _) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
 
-        var (joinedRoom, team) = await orchestrator.JoinAsync("conn-1", room.Id, WhitePlayerId);
+        var (joinedGame, team) = await orchestrator.JoinAsync("conn-1", room.Id, WhitePlayerId);
 
-        Assert.Same(room, joinedRoom);
+        Assert.Equal(room.Id, joinedGame.Id);
         Assert.Equal(Team.White, team);
     }
 
@@ -113,10 +113,10 @@ public class GameOrchestratorTests
         var (orchestrator, repo) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(WhitePlayerId, Team.White);
 
-        var (_, team) = await orchestrator.JoinAsync("conn-1", room.Id, BlackPlayerId);
+        var (joinedGame, team) = await orchestrator.JoinAsync("conn-1", room.Id, BlackPlayerId);
 
         Assert.Equal(Team.Black, team);
-        Assert.Equal(BlackPlayerId, room.BlackPlayerId);
+        Assert.Equal(BlackPlayerId, joinedGame.BlackPlayerId);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(BlackPlayerId, gameEntity.BlackPlayerId);
@@ -128,10 +128,10 @@ public class GameOrchestratorTests
         var (orchestrator, repo) = CreateOrchestrator();
         var room = await orchestrator.CreateGameAsync(BlackPlayerId, Team.Black);
 
-        var (_, team) = await orchestrator.JoinAsync("conn-1", room.Id, WhitePlayerId);
+        var (joinedGame, team) = await orchestrator.JoinAsync("conn-1", room.Id, WhitePlayerId);
 
         Assert.Equal(Team.White, team);
-        Assert.Equal(WhitePlayerId, room.WhitePlayerId);
+        Assert.Equal(WhitePlayerId, joinedGame.WhitePlayerId);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(WhitePlayerId, gameEntity.WhitePlayerId);
@@ -256,12 +256,12 @@ public class GameOrchestratorTests
         await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
         await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
 
-        orchestrator.OfferDraw("white-conn");
-        Assert.Equal(Team.White, room.DrawOfferedBy);
+        var (afterOffer, _) = orchestrator.OfferDraw("white-conn");
+        Assert.Equal(Team.White, afterOffer.DrawOfferedBy);
 
-        await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)), null);
+        var afterMove = await orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)), null);
 
-        Assert.Null(room.DrawOfferedBy);
+        Assert.Null(afterMove.DrawOfferedBy);
     }
 
     [Fact]
@@ -382,8 +382,8 @@ public class GameOrchestratorTests
         var result = await orchestrator.RespondToDrawAsync("black-conn", accept: false);
 
         Assert.False(result.Accepted);
-        Assert.Null(result.Room.DrawOfferedBy);
-        Assert.Equal(GameResult.Ongoing, result.Room.State.Result);
+        Assert.Null(result.Game.DrawOfferedBy);
+        Assert.Equal(GameResult.Ongoing, result.Game.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.Ongoing, gameEntity.Result);
@@ -403,8 +403,8 @@ public class GameOrchestratorTests
         var result = await orchestrator.RespondToDrawAsync("black-conn", accept: true);
 
         Assert.True(result.Accepted);
-        Assert.Null(result.Room.DrawOfferedBy);
-        Assert.Equal(GameResult.DrawByAgreement, result.Room.State.Result);
+        Assert.Null(result.Game.DrawOfferedBy);
+        Assert.Equal(GameResult.DrawByAgreement, result.Game.State.Result);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.DrawByAgreement, gameEntity.Result);
@@ -588,9 +588,9 @@ public class GameOrchestratorTests
         await orchestrator.JoinAsync("white-conn", room.Id, WhitePlayerId);
 
         time.Advance(TimeSpan.FromMinutes(3));
-        await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
+        var (joinedGame, _) = await orchestrator.JoinAsync("black-conn", room.Id, BlackPlayerId);
 
-        Assert.Equal(TimeSpan.FromMinutes(5), room.State.WhiteTimeRemaining);
+        Assert.Equal(TimeSpan.FromMinutes(5), joinedGame.State.WhiteTimeRemaining);
     }
 
     [Fact]
@@ -664,7 +664,6 @@ public class GameOrchestratorTests
         await Assert.ThrowsAsync<GameAlreadyEndedException>(() =>
             orchestrator.MakeMoveAsync("white-conn", new PieceMove(new PieceCord(4, 1), new PieceCord(4, 3)), null));
 
-        Assert.Equal(GameResult.BlackWonOnTime, room.State.Result);
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.BlackWonOnTime, gameEntity.Result);
     }

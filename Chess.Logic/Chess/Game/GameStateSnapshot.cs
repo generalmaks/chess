@@ -1,7 +1,6 @@
-using Chess.Logic;
 using Chess.Logic.Pieces.Chess;
 
-namespace Chess.Orchestrator;
+namespace Chess.Logic;
 
 public sealed record GameStateSnapshot(
     string?[][] Board,
@@ -10,7 +9,7 @@ public sealed record GameStateSnapshot(
     TimeSpan? WhiteTimeRemaining,
     TimeSpan? BlackTimeRemaining)
 {
-    internal static GameStateSnapshot Capture(ChessGameSession session)
+    public static GameStateSnapshot Capture(ChessGameSession session)
     {
         var board = new string?[8][];
         for (var x = 0; x < 8; x++)
