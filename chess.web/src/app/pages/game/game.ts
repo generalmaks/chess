@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
 import { Game as GameService } from '../../core/game';
 import { Team } from '../../core/models/game.models';
@@ -36,7 +38,7 @@ const RESULT_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-game',
-  imports: [RouterLink],
+  imports: [RouterLink, MatButtonModule, MatCardModule],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })

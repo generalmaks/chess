@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-slate-100 px-4 py-8">
   <div class="mx-auto max-w-4xl">
     @if (!game.opponentJoined() || game.result() !== 'Ongoing') {
-      <a routerLink="/play" class="mb-4 inline-block text-sm text-slate-500 hover:underline">&larr; Back to lobby</a>
+      <a mat-button routerLink="/play" class="mb-4">&larr; Back to lobby</a>
     }
 
     @if (joinError()) {
@@ -23,11 +23,7 @@
             @if (!game.opponentJoined()) {
               <div class="mt-1 flex items-center gap-2">
                 <code class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ game.gameId() }}</code>
-                <button
-                  type="button"
-                  (click)="copyGameId()"
-                  class="text-xs font-medium text-slate-500 hover:underline"
-                >
+                <button mat-button (click)="copyGameId()" class="!min-w-0 !px-2 !text-xs">
                   {{ copied() ? 'Copied!' : 'Copy' }}
                 </button>
               </div>
@@ -39,20 +35,8 @@
 
         @if (game.result() === 'Ongoing') {
           <div class="flex gap-2">
-            <button
-              type="button"
-              (click)="offerDraw()"
-              class="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-200"
-            >
-              Offer draw
-            </button>
-            <button
-              type="button"
-              (click)="resign()"
-              class="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-            >
-              Resign
-            </button>
+            <button mat-stroked-button (click)="offerDraw()">Offer draw</button>
+            <button mat-stroked-button color="warn" (click)="resign()">Resign</button>
           </div>
         }
       </div>
@@ -61,8 +45,8 @@
         <div class="mb-4 flex items-center justify-between rounded-md bg-amber-50 p-3 text-sm text-amber-800">
           <span>Your opponent offered a draw.</span>
           <div class="flex gap-2">
-            <button type="button" (click)="respondToDraw(true)" class="font-medium hover:underline">Accept</button>
-            <button type="button" (click)="respondToDraw(false)" class="font-medium hover:underline">Decline</button>
+            <button mat-button (click)="respondToDraw(true)">Accept</button>
+            <button mat-button (click)="respondToDraw(false)">Decline</button>
           </div>
         </div>
       }
@@ -144,13 +128,11 @@
           }
         </div>
 
-        <aside class="hidden w-56 shrink-0 rounded-lg border border-slate-300 bg-white shadow-md sm:block">
+        <mat-card class="hidden w-56 shrink-0 !rounded-lg p-0 sm:block">
           <div class="flex items-center justify-between border-b border-slate-200 px-3 py-2">
             <h2 class="text-sm font-semibold text-slate-700">Moves</h2>
             @if (isViewingHistory()) {
-              <button type="button" (click)="returnToLive()" class="text-xs font-medium text-blue-600 hover:underline">
-                Live
-              </button>
+              <button mat-button (click)="returnToLive()" class="!min-w-0 !px-2 !text-xs">Live</button>
             }
           </div>
           <ol class="max-h-[28rem] overflow-y-auto px-3 py-2 text-sm">
@@ -180,7 +162,7 @@
               <li class="py-1 text-slate-400">No moves yet</li>
             }
           </ol>
-        </aside>
+        </mat-card>
       </div>
     }
   </div>

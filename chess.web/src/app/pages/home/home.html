@@ -7,20 +7,9 @@
           Welcome, {{ auth.username() }} · Elo {{ auth.eloRating() }}
         </p>
       </div>
-      <button
-        type="button"
-        (click)="logout()"
-        class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-      >
-        Log out
-      </button>
+      <button mat-stroked-button (click)="logout()">Log out</button>
     </header>
 
-    <a
-      routerLink="/play"
-      class="inline-block rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-    >
-      Play chess
-    </a>
+    <a mat-flat-button color="primary" routerLink="/play">Play chess</a>
   </div>
 </div>
