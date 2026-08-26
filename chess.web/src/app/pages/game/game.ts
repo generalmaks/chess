@@ -133,7 +133,7 @@ export class Game implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     const gameId = this.route.snapshot.paramMap.get('gameId');
     if (!gameId) {
-      await this.router.navigate(['/play']);
+      await this.router.navigate(['/']);
       return;
     }
 
