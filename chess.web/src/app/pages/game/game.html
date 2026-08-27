@@ -80,30 +80,35 @@
 
             <div class="min-w-0 flex-1">
               <div
-                class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-[var(--mat-sys-outline-variant)] shadow-md transition-opacity"
+                class="relative aspect-square w-full overflow-hidden rounded-lg border border-[var(--mat-sys-outline-variant)] shadow-md transition-opacity"
                 [class.opacity-60]="isViewingHistory()"
               >
-                @for (row of rows(); track row[0].y) {
-                  @for (square of row; track square.x) {
-                    <button
-                      type="button"
-                      (click)="onSquareClick(square)"
-                      class="relative flex aspect-square items-center justify-center p-1"
-                      [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
-                      [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
-                      [class.ring-4]="isSelected(square.x, square.y)"
-                      [class.ring-blue-400]="isSelected(square.x, square.y)"
-                      [class.legal-capture]="square.piece && isLegalTarget(square.x, square.y)"
-                    >
-                      @if (pieceImage(square.piece); as src) {
-                        <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
-                      }
-                      @if (!square.piece && isLegalTarget(square.x, square.y)) {
-                        <span class="legal-move-dot"></span>
-                      }
-                    </button>
+                <div class="grid h-full w-full grid-cols-8">
+                  @for (row of rows(); track row[0].y) {
+                    @for (square of row; track square.x) {
+                      <button
+                        type="button"
+                        (click)="onSquareClick(square)"
+                        class="relative flex aspect-square items-center justify-center p-1"
+                        [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
+                        [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
+                        [class.ring-4]="isSelected(square.x, square.y)"
+                        [class.ring-blue-400]="isSelected(square.x, square.y)"
+                        [class.legal-capture]="square.piece && isLegalTarget(square.x, square.y)"
+                      >
+                        @if (!square.piece && isLegalTarget(square.x, square.y)) {
+                          <span class="legal-move-dot"></span>
+                        }
+                      </button>
+                    }
                   }
-                }
+                </div>
+
+                <div class="pointer-events-none absolute inset-0">
+                  @for (pv of pieceViews(); track pv.id) {
+                    <app-piece-sprite [piece]="pv.piece" [transform]="pieceTransform(pv)" />
+                  }
+                </div>
               </div>
             </div>
           </div>

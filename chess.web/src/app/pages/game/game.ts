@@ -5,6 +5,8 @@ import { MatCardModule } from '@angular/material/card';
 
 import { Game as GameService } from '../../core/game';
 import { Team } from '../../core/models/game.models';
+import { diffPieceViews, PieceView } from '../../core/piece-diff';
+import { PieceSprite } from './piece-sprite';
 
 interface Square {
   x: number;
@@ -38,7 +40,7 @@ const RESULT_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-game',
-  imports: [RouterLink, MatButtonModule, MatCardModule],
+  imports: [RouterLink, MatButtonModule, MatCardModule, PieceSprite],
   templateUrl: './game.html',
   styleUrl: './game.scss',
 })
@@ -64,6 +66,12 @@ export class Game implements OnInit, OnDestroy {
 
   private readonly legalTargetsSignal = signal<{ x: number; y: number }[]>([]);
   protected readonly legalTargets = this.legalTargetsSignal.asReadonly();
+
+  // Bookkeeping for animating piece moves; not a signal itself, only pieceViewsSignal
+  // (the rendered output) needs to be reactive. See diffPieceViews() for the matching.
+  private previousPieceViews: PieceView[] = [];
+  private readonly pieceViewsSignal = signal<PieceView[]>([]);
+  protected readonly pieceViews = this.pieceViewsSignal.asReadonly();
 
   constructor() {
     // A pinned view only makes sense until the opponent moves — once they do, the
@@ -97,6 +105,17 @@ export class Game implements OnInit, OnDestroy {
           this.legalTargetsSignal.set(targets);
         }
       });
+    });
+
+    // Re-matches pieces to their new squares (by identity, not by square) whenever the
+    // displayed position changes — from a move arriving or from browsing move history —
+    // so the template can key on pv.id and each <app-piece-sprite> instance persists
+    // across the update, letting it play its own move animation (see piece-sprite.ts).
+    effect(() => {
+      const board = this.displayBoard();
+      const next = board ? diffPieceViews(this.previousPieceViews, board) : [];
+      this.previousPieceViews = next;
+      this.pieceViewsSignal.set(next);
     });
   }
 
@@ -169,10 +188,6 @@ export class Game implements OnInit, OnDestroy {
     await this.game.leave();
   }
 
-  protected pieceImage(piece: string | null): string | null {
-    return piece ? `/pieces/${piece}.svg` : null;
-  }
-
   protected isSelected(x: number, y: number): boolean {
     const sel = this.selected();
     return sel !== null && sel.x === x && sel.y === y;
@@ -180,6 +195,16 @@ export class Game implements OnInit, OnDestroy {
 
   protected isLegalTarget(x: number, y: number): boolean {
     return this.legalTargets().some((s) => s.x === x && s.y === y);
+  }
+
+  // Board-coordinate -> on-screen column/row (0-7), matching rows()'s flip logic, then
+  // expressed as a translate() so the CSS transition animates a GPU-composited transform
+  // instead of layout properties (left/top), which is both faster and more reliable.
+  protected pieceTransform(pv: PieceView): string {
+    const flip = this.game.myTeam() === 'Black';
+    const col = flip ? 7 - pv.x : pv.x;
+    const row = flip ? pv.y : 7 - pv.y;
+    return `translate(${col * 100}%, ${row * 100}%)`;
   }
 
   protected viewMove(ply: number): void {
