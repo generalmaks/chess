@@ -1,1 +1,11 @@
+<button
+  mat-icon-button
+  type="button"
+  class="!fixed top-3 right-3 z-50"
+  [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+  (click)="theme.toggle()"
+>
+  <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+</button>
+
 <router-outlet />

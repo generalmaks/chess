@@ -1,9 +1,9 @@
-<div class="min-h-screen bg-slate-100 px-4 py-8">
+<div class="min-h-screen bg-[var(--mat-sys-surface-container-low)] px-4 py-8">
   <div class="mx-auto max-w-3xl">
     <header class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">Chess</h1>
-        <p class="text-sm text-slate-500">
+        <h1 class="text-2xl font-semibold text-[var(--mat-sys-on-surface)]">Chess</h1>
+        <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
           Welcome, {{ auth.username() }} · Elo {{ auth.eloRating() }}
         </p>
       </div>
@@ -17,7 +17,7 @@
 
       <mat-card-content class="pt-4">
         <section class="mb-8">
-          <h2 class="mb-3 text-sm font-medium text-slate-600">Start a new game</h2>
+          <h2 class="mb-3 text-sm font-medium text-[var(--mat-sys-on-surface-variant)]">Start a new game</h2>
 
           <mat-button-toggle-group
             class="mb-4 w-full"
@@ -37,7 +37,7 @@
         </section>
 
         <section>
-          <h2 class="mb-3 text-sm font-medium text-slate-600">Join a game</h2>
+          <h2 class="mb-3 text-sm font-medium text-[var(--mat-sys-on-surface-variant)]">Join a game</h2>
           <form (ngSubmit)="joinGame()" class="flex items-start gap-2">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Game ID</mat-label>

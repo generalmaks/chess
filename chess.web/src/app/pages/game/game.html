@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-100 px-4 py-8">
+<div class="min-h-screen bg-[var(--mat-sys-surface-container-low)] px-4 py-8">
   <div class="mx-auto max-w-4xl">
     @if (!game.opponentJoined() || game.result() !== 'Ongoing') {
       <a mat-button routerLink="/" class="mb-4">&larr; Back to lobby</a>
@@ -9,11 +9,11 @@
     } @else {
       <div class="mb-4 flex items-center justify-between">
         <div>
-          <p class="text-sm text-slate-500">
-            You're playing <span class="font-medium text-slate-800">{{ game.myTeam() }}</span>
+          <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
+            You're playing <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.myTeam() }}</span>
           </p>
           @if (game.result() === 'Ongoing') {
-            <p class="text-sm text-slate-500">
+            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
               @if (!game.opponentJoined()) {
                 Waiting for opponent to join&hellip;
               } @else {
@@ -22,14 +22,14 @@
             </p>
             @if (!game.opponentJoined()) {
               <div class="mt-1 flex items-center gap-2">
-                <code class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ game.gameId() }}</code>
+                <code class="rounded bg-[var(--mat-sys-surface-container-low)] px-2 py-0.5 text-xs text-[var(--mat-sys-on-surface-variant)]">{{ game.gameId() }}</code>
                 <button mat-button (click)="copyGameId()" class="!min-w-0 !px-2 !text-xs">
                   {{ copied() ? 'Copied!' : 'Copy' }}
                 </button>
               </div>
             }
           } @else {
-            <p class="text-sm font-semibold text-slate-800">{{ resultLabel() }}</p>
+            <p class="text-sm font-semibold text-[var(--mat-sys-on-surface)]">{{ resultLabel() }}</p>
           }
         </div>
 
@@ -72,7 +72,7 @@
           <div class="flex">
             <div class="flex w-6 flex-col">
               @for (rank of rankLabels(); track rank) {
-                <div class="flex flex-1 items-center justify-center text-base font-semibold text-slate-500">
+                <div class="flex flex-1 items-center justify-center text-base font-semibold text-[var(--mat-sys-on-surface-variant)]">
                   {{ rank }}
                 </div>
               }
@@ -80,7 +80,7 @@
 
             <div class="min-w-0 flex-1">
               <div
-                class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-slate-300 shadow-md transition-opacity"
+                class="grid aspect-square w-full grid-cols-8 overflow-hidden rounded-lg border border-[var(--mat-sys-outline-variant)] shadow-md transition-opacity"
                 [class.opacity-60]="isViewingHistory()"
               >
                 @for (row of rows(); track row[0].y) {
@@ -108,7 +108,7 @@
             <div class="w-6"></div>
             <div class="grid min-w-0 flex-1 grid-cols-8">
               @for (file of fileLabels(); track file) {
-                <div class="flex items-center justify-center pt-2 text-base font-semibold text-slate-500">
+                <div class="flex items-center justify-center pt-2 text-base font-semibold text-[var(--mat-sys-on-surface-variant)]">
                   {{ file }}
                 </div>
               }
@@ -129,8 +129,8 @@
         </div>
 
         <mat-card class="hidden w-56 shrink-0 !rounded-lg p-0 sm:block">
-          <div class="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-            <h2 class="text-sm font-semibold text-slate-700">Moves</h2>
+          <div class="flex items-center justify-between border-b border-[var(--mat-sys-outline-variant)] px-3 py-2">
+            <h2 class="text-sm font-semibold text-[var(--mat-sys-on-surface)]">Moves</h2>
             @if (isViewingHistory()) {
               <button mat-button (click)="returnToLive()" class="!min-w-0 !px-2 !text-xs">Live</button>
             }
@@ -138,12 +138,12 @@
           <ol class="max-h-[28rem] overflow-y-auto px-3 py-2 text-sm">
             @for (pair of movePairs(); track pair.number) {
               <li class="flex items-center gap-2 py-0.5">
-                <span class="w-5 shrink-0 text-slate-400">{{ pair.number }}.</span>
+                <span class="w-5 shrink-0 text-[var(--mat-sys-outline)]">{{ pair.number }}.</span>
                 <button
                   type="button"
                   (click)="viewMove(pair.whitePly)"
-                  class="w-14 shrink-0 rounded px-1 py-0.5 text-left text-slate-800 hover:bg-slate-100"
-                  [class.bg-blue-100]="viewPly() === pair.whitePly"
+                  class="w-14 shrink-0 rounded px-1 py-0.5 text-left text-[var(--mat-sys-on-surface)] hover:bg-[var(--mat-sys-surface-container-low)]"
+                  [class.move-active]="viewPly() === pair.whitePly"
                 >
                   {{ pair.white }}
                 </button>
@@ -151,15 +151,15 @@
                   <button
                     type="button"
                     (click)="viewMove(pair.blackPly!)"
-                    class="rounded px-1 py-0.5 text-left text-slate-800 hover:bg-slate-100"
-                    [class.bg-blue-100]="viewPly() === pair.blackPly"
+                    class="rounded px-1 py-0.5 text-left text-[var(--mat-sys-on-surface)] hover:bg-[var(--mat-sys-surface-container-low)]"
+                    [class.move-active]="viewPly() === pair.blackPly"
                   >
                     {{ pair.black }}
                   </button>
                 }
               </li>
             } @empty {
-              <li class="py-1 text-slate-400">No moves yet</li>
+              <li class="py-1 text-[var(--mat-sys-outline)]">No moves yet</li>
             }
           </ol>
         </mat-card>
