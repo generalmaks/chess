@@ -17,6 +17,8 @@ public interface IGameOrchestrator
 
     (Game Game, Team Team) OfferDraw(string connectionId);
 
+    PieceMove[] GetLegalMoves(string connectionId, PieceCord from);
+
     Task<DrawResponseResult> RespondToDrawAsync(string connectionId, bool accept, CancellationToken ct = default);
 
     Task<Game?> HandleDisconnectAsync(string connectionId, CancellationToken ct = default);

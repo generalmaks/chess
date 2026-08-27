@@ -88,14 +88,18 @@
                     <button
                       type="button"
                       (click)="onSquareClick(square)"
-                      class="flex aspect-square items-center justify-center p-1"
+                      class="relative flex aspect-square items-center justify-center p-1"
                       [class.bg-amber-100]="(square.x + square.y) % 2 === 0"
                       [class.bg-amber-700]="(square.x + square.y) % 2 !== 0"
                       [class.ring-4]="isSelected(square.x, square.y)"
                       [class.ring-blue-400]="isSelected(square.x, square.y)"
+                      [class.legal-capture]="square.piece && isLegalTarget(square.x, square.y)"
                     >
                       @if (pieceImage(square.piece); as src) {
                         <img [src]="src" [alt]="square.piece" class="h-full w-full" draggable="false" />
+                      }
+                      @if (!square.piece && isLegalTarget(square.x, square.y)) {
+                        <span class="legal-move-dot"></span>
                       }
                     </button>
                   }

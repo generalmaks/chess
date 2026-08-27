@@ -62,6 +62,9 @@ export class Game implements OnInit, OnDestroy {
     return ply === null ? this.game.board() : (this.game.positions()[ply] ?? this.game.board());
   });
 
+  private readonly legalTargetsSignal = signal<{ x: number; y: number }[]>([]);
+  protected readonly legalTargets = this.legalTargetsSignal.asReadonly();
+
   constructor() {
     // A pinned view only makes sense until the opponent moves — once they do, the
     // position you were looking at is no longer "current" in any useful sense.
@@ -76,6 +79,24 @@ export class Game implements OnInit, OnDestroy {
       if (moverTeam !== myTeam) {
         this.viewPly.set(null);
       }
+    });
+
+    // Fetches the selected piece's legal moves from the backend, which accounts for
+    // checks/pins/castling/en passant rather than reimplementing chess rules here.
+    effect(() => {
+      const sel = this.selected();
+      if (!sel) {
+        this.legalTargetsSignal.set([]);
+        return;
+      }
+
+      this.game.getLegalMoves(sel.x, sel.y).then((targets) => {
+        // Drop stale responses if the selection changed while this was in flight.
+        const current = this.selected();
+        if (current && current.x === sel.x && current.y === sel.y) {
+          this.legalTargetsSignal.set(targets);
+        }
+      });
     });
   }
 
@@ -157,6 +178,10 @@ export class Game implements OnInit, OnDestroy {
     return sel !== null && sel.x === x && sel.y === y;
   }
 
+  protected isLegalTarget(x: number, y: number): boolean {
+    return this.legalTargets().some((s) => s.x === x && s.y === y);
+  }
+
   protected viewMove(ply: number): void {
     this.selected.set(null);
     this.viewPly.set(ply === this.game.moveHistory().length ? null : ply);
@@ -175,10 +200,15 @@ export class Game implements OnInit, OnDestroy {
     const sel = this.selected();
 
     if (sel) {
-      this.selected.set(null);
       if (sel.x === square.x && sel.y === square.y) {
+        this.selected.set(null);
         return;
       }
+      if (square.piece && ownsSquare(square.piece, this.game.myTeam())) {
+        this.selected.set({ x: square.x, y: square.y });
+        return;
+      }
+      this.selected.set(null);
       await this.game.makeMove(sel.x, sel.y, square.x, square.y);
       return;
     }

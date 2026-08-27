@@ -13,6 +13,7 @@ import {
   JoinGameResponse,
   MoveHistoryEntryDto,
   MoveRequest,
+  SquareCoordinate,
   Team,
   TimeControl,
 } from './models/game.models';
@@ -114,6 +115,19 @@ export class Game {
       await this.connection!.invoke('MakeMove', request);
     } catch (err) {
       this.errorSignal.set(errorMessage(err));
+    }
+  }
+
+  // Delegates to the backend's real move generator (accounts for checks, pins, castling,
+  // en passant) rather than reimplementing chess rules on the client.
+  async getLegalMoves(x: number, y: number): Promise<SquareCoordinate[]> {
+    if (!this.connection) {
+      return [];
+    }
+    try {
+      return await this.connection.invoke<SquareCoordinate[]>('GetLegalMoves', x, y);
+    } catch {
+      return [];
     }
   }
 

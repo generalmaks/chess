@@ -102,6 +102,12 @@ public class GameOrchestrator(
         return (room.ToGame(), team);
     }
 
+    public PieceMove[] GetLegalMoves(string connectionId, PieceCord from)
+    {
+        var (room, _) = GetActiveConnection(connectionId);
+        return room.Session.Board.GetLegalMoves(from);
+    }
+
     public async Task<DrawResponseResult> RespondToDrawAsync(string connectionId, bool accept, CancellationToken ct = default)
     {
         var (room, team) = GetActiveConnection(connectionId);

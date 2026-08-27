@@ -47,6 +47,11 @@ export interface MoveHistoryEntryDto {
   promotedTo: string | null;
 }
 
+export interface SquareCoordinate {
+  x: number;
+  y: number;
+}
+
 export interface MoveRequest {
   fromX: number;
   fromY: number;

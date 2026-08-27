@@ -33,6 +33,12 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
         await Clients.Group(GroupName(game.Id)).SendAsync("StateUpdated", GameStateMapper.ToDto(game.State));
     }
 
+    public Task<SquareDto[]> GetLegalMoves(int x, int y)
+    {
+        var moves = Guarded(() => orchestrator.GetLegalMoves(Context.ConnectionId, new PieceCord(x, y)));
+        return Task.FromResult(moves.Select(m => new SquareDto(m.To.X, m.To.Y)).ToArray());
+    }
+
     public async Task Resign()
     {
         var game = await GuardedAsync(() => orchestrator.ResignAsync(Context.ConnectionId));

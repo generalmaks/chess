@@ -1,3 +1,16 @@
 .move-active {
   background-color: var(--mat-sys-primary-container);
 }
+
+.legal-move-dot {
+  position: absolute;
+  width: 28%;
+  height: 28%;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.legal-capture {
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.35);
+}
