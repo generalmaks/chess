@@ -10,6 +10,20 @@ public record MoveHistoryEntryDto(int FromX, int FromY, int ToX, int ToY, char? 
 
 public record SquareDto(int X, int Y);
 
+public record PagedResultDto<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount, int TotalPages);
+
+public record GameHistoryEntryDto(
+    string GameId,
+    DateTime CreatedAtUtc,
+    DateTime? EndedAtUtc,
+    string Result,
+    string PlayerColor,
+    string Outcome,
+    string? OpponentName,
+    int? PlayerEloBefore,
+    int? PlayerEloAfter,
+    int MoveCount);
+
 public record GameStateDto(
     string?[][] Board,
     string CurrentTurn,

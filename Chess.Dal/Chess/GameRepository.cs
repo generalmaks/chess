@@ -1,10 +1,50 @@
 using Chess.Model.Chess.Game;
 using Chess.Model.Chess.Pieces.Chess;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chess.Dal.Chess;
 
 public class GameRepository(ChessDbContext db) : IGameRepository
 {
+    public async Task<PagedResult<GameHistoryEntry>> GetPlayerGamesAsync(Guid playerId, int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = db.Games
+            .AsNoTracking()
+            .Where(g => g.WhitePlayerId == playerId || g.BlackPlayerId == playerId)
+            .OrderByDescending(g => g.CreatedAtUtc);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(g => new GameHistoryEntry
+            {
+                Id = g.Id,
+                CreatedAtUtc = g.CreatedAtUtc,
+                EndedAtUtc = g.EndedAtUtc,
+                Result = g.Result,
+                WhitePlayerId = g.WhitePlayerId,
+                WhitePlayerName = g.WhitePlayer!.Username,
+                BlackPlayerId = g.BlackPlayerId,
+                BlackPlayerName = g.BlackPlayer!.Username,
+                WhiteEloBefore = g.WhiteEloBefore,
+                BlackEloBefore = g.BlackEloBefore,
+                WhiteEloAfter = g.WhiteEloAfter,
+                BlackEloAfter = g.BlackEloAfter,
+                MoveCount = g.Moves.Count,
+            })
+            .ToListAsync(ct);
+
+        return new PagedResult<GameHistoryEntry>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+        };
+    }
+
     public async Task AddGameAsync(NewGame game, CancellationToken ct = default)
     {
         db.Games.Add(new GameDao

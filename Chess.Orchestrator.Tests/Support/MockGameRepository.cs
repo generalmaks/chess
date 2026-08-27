@@ -14,8 +14,20 @@ public class MockGameRepository
     public List<TrackedGame> AddedGames { get; } = [];
     public List<RecordedMove> AddedMoves { get; } = [];
 
+    // Games returned by GetPlayerGamesAsync; tests populate this directly.
+    public List<GameHistoryEntry> HistoryEntries { get; } = [];
+
     public MockGameRepository()
     {
+        Mock.Setup(r => r.GetPlayerGamesAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, int page, int pageSize, CancellationToken _) => new PagedResult<GameHistoryEntry>
+            {
+                Items = HistoryEntries.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = HistoryEntries.Count,
+            });
+
         Mock.Setup(r => r.AddGameAsync(It.IsAny<NewGame>(), It.IsAny<CancellationToken>()))
             .Callback<NewGame, CancellationToken>((game, _) => AddedGames.Add(new TrackedGame
             {

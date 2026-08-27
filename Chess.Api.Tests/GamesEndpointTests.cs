@@ -61,6 +61,66 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         Assert.Equal("White", body.Team);
     }
 
+    [Fact]
+    public async Task GameHistory_WithoutToken_ReturnsUnauthorized()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/games/history");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GameHistory_ForwardsPagingAndProjectsEntriesFromThePlayerPerspective()
+    {
+        var (client, playerId, orchestrator) = await AuthenticatedClientAsync();
+        var opponentId = Guid.NewGuid();
+        var gameId = Guid.NewGuid();
+        orchestrator
+            .Setup(o => o.GetPlayerGamesAsync(playerId, 2, 5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<GameHistoryEntry>
+            {
+                Page = 2,
+                PageSize = 5,
+                TotalCount = 8,
+                Items =
+                [
+                    new GameHistoryEntry
+                    {
+                        Id = gameId,
+                        CreatedAtUtc = new DateTime(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc),
+                        EndedAtUtc = new DateTime(2026, 8, 1, 12, 30, 0, DateTimeKind.Utc),
+                        Result = GameResult.BlackWonByCheckmate,
+                        WhitePlayerId = opponentId,
+                        WhitePlayerName = "opponent",
+                        BlackPlayerId = playerId,
+                        BlackPlayerName = "me",
+                        BlackEloBefore = 1200,
+                        BlackEloAfter = 1215,
+                        MoveCount = 42,
+                    },
+                ],
+            });
+
+        var response = await client.GetAsync("/games/history?page=2&pageSize=5");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<PagedResultDto<GameHistoryEntryDto>>();
+        Assert.Equal(2, body!.Page);
+        Assert.Equal(8, body.TotalCount);
+        Assert.Equal(2, body.TotalPages);
+
+        var entry = Assert.Single(body.Items);
+        Assert.Equal(gameId.ToString(), entry.GameId);
+        Assert.Equal("Black", entry.PlayerColor);
+        Assert.Equal("Win", entry.Outcome);
+        Assert.Equal("opponent", entry.OpponentName);
+        Assert.Equal(1200, entry.PlayerEloBefore);
+        Assert.Equal(1215, entry.PlayerEloAfter);
+        Assert.Equal(42, entry.MoveCount);
+    }
+
     private async Task<(HttpClient Client, Guid PlayerId, Mock<IGameOrchestrator> Orchestrator)> AuthenticatedClientAsync()
     {
         var (gameOrchestrator, playerOrchestrator) = factory.ResetMocks();

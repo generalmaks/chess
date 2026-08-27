@@ -29,6 +29,16 @@ public class GameOrchestrator(
         return room.ToGame();
     }
 
+    public const int MaxPageSize = 50;
+    public const int DefaultPageSize = 20;
+
+    public Task<PagedResult<GameHistoryEntry>> GetPlayerGamesAsync(Guid playerId, int page, int pageSize, CancellationToken ct = default)
+    {
+        page = Math.Max(1, page);
+        pageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
+        return repository.GetPlayerGamesAsync(playerId, page, pageSize, ct);
+    }
+
     public async Task<(Model.Chess.Game.Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId) ?? throw new GameNotFoundException();

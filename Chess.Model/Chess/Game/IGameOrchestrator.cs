@@ -9,6 +9,8 @@ public interface IGameOrchestrator
 {
     Task<Game> CreateGameAsync(Guid playerId, Team? preferredTeam = null, TimeControl? timeControl = null, CancellationToken ct = default);
 
+    Task<PagedResult<GameHistoryEntry>> GetPlayerGamesAsync(Guid playerId, int page, int pageSize, CancellationToken ct = default);
+
     Task<(Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default);
 
     Task<Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default);
