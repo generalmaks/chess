@@ -7,38 +7,12 @@
     @if (joinError()) {
       <p class="rounded-md bg-red-50 p-4 text-sm text-red-600">{{ joinError() }}</p>
     } @else {
-      <div class="mb-4 flex items-start justify-between">
-        <div>
-          @if (game.result() === 'Ongoing') {
-            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
-              @if (!game.opponentJoined()) {
-                Waiting for opponent to join&hellip;
-              } @else {
-                {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
-              }
-            </p>
-            @if (!game.opponentJoined()) {
-              <div class="mt-1 flex items-center gap-2">
-                <code class="rounded bg-[var(--mat-sys-surface-container-low)] px-2 py-0.5 text-xs text-[var(--mat-sys-on-surface-variant)]">{{ game.gameId() }}</code>
-                <button mat-button (click)="copyGameId()" class="!min-w-0 !px-2 !text-xs">
-                  {{ copied() ? 'Copied!' : 'Copy' }}
-                </button>
-              </div>
-            }
-          } @else {
-            <p class="text-sm font-semibold text-[var(--mat-sys-on-surface)]">
-              {{ game.reviewMode() ? 'Review · ' : '' }}{{ resultLabel() }}
-            </p>
-          }
+      @if (game.result() === 'Ongoing' && game.opponentJoined()) {
+        <div class="mb-4 flex justify-end gap-2">
+          <button mat-stroked-button (click)="offerDraw()">Offer draw</button>
+          <button mat-stroked-button color="warn" (click)="resign()">Resign</button>
         </div>
-
-        @if (game.result() === 'Ongoing') {
-          <div class="flex gap-2">
-            <button mat-stroked-button (click)="offerDraw()">Offer draw</button>
-            <button mat-stroked-button color="warn" (click)="resign()">Resign</button>
-          </div>
-        }
-      </div>
+      }
 
       @if (game.drawOfferedByOpponent()) {
         <div class="mb-4 flex items-center justify-between rounded-md bg-amber-50 p-3 text-sm text-amber-800">
@@ -86,7 +60,7 @@
             <div class="min-w-0 flex-1">
               <div
                 class="relative aspect-square w-full overflow-hidden rounded-lg border border-[var(--mat-sys-outline-variant)] shadow-md transition-opacity"
-                [class.opacity-60]="isViewingHistory() && !game.reviewMode()"
+                [class.opacity-60]="isViewingHistory() && game.result() === 'Ongoing'"
               >
                 <div class="grid h-full w-full grid-cols-8">
                   @for (row of rows(); track row[0].y) {
@@ -208,6 +182,26 @@
               </button>
             </div>
           }
+
+          <div class="border-t border-[var(--mat-sys-outline-variant)] px-3 py-2 text-center text-sm">
+            @if (game.result() !== 'Ongoing') {
+              <p class="font-semibold text-[var(--mat-sys-on-surface)]">
+                {{ game.reviewMode() ? 'Review · ' : '' }}{{ resultLabel() }}
+              </p>
+            } @else if (!game.opponentJoined()) {
+              <p class="text-[var(--mat-sys-on-surface-variant)]">Waiting for opponent to join&hellip;</p>
+              <div class="mt-2 flex items-center justify-center gap-1">
+                <code class="min-w-0 break-all rounded bg-[var(--mat-sys-surface-container-low)] px-2 py-0.5 text-[10px] text-[var(--mat-sys-on-surface-variant)]">{{ game.gameId() }}</code>
+                <button mat-button (click)="copyGameId()" class="!min-w-0 shrink-0 !px-2 !text-xs">
+                  {{ copied() ? 'Copied!' : 'Copy' }}
+                </button>
+              </div>
+            } @else {
+              <p class="text-[var(--mat-sys-on-surface-variant)]">
+                {{ game.isMyTurn() ? 'Your turn' : (game.currentTurn() ?? '') + "'s turn" }}
+              </p>
+            }
+          </div>
         </mat-card>
       </div>
     }
