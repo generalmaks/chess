@@ -14,6 +14,29 @@ export type GameResult =
   | 'FiftyMoveRuleDraw'
   | 'DrawByAgreement';
 
+export type GameOutcome = 'Win' | 'Loss' | 'Draw' | 'Ongoing' | 'Unknown';
+
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface GameHistoryEntry {
+  gameId: string;
+  createdAtUtc: string;
+  endedAtUtc: string | null;
+  result: GameResult;
+  playerColor: Team;
+  outcome: GameOutcome;
+  opponentName: string | null;
+  playerEloBefore: number | null;
+  playerEloAfter: number | null;
+  moveCount: number;
+}
+
 export interface TimeControl {
   initialMinutes: number;
   incrementSeconds: number;
@@ -36,6 +59,15 @@ export interface JoinGameResponse {
   team: Team;
   state: GameStateDto;
   opponentJoined: boolean;
+  moves: MoveHistoryEntryDto[];
+}
+
+export interface GameReviewDto {
+  gameId: string;
+  result: GameResult;
+  playerColor: Team | null;
+  whitePlayerName: string | null;
+  blackPlayerName: string | null;
   moves: MoveHistoryEntryDto[];
 }
 

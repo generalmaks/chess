@@ -9,9 +9,18 @@
     } @else {
       <div class="mb-4 flex items-center justify-between">
         <div>
-          <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
-            You're playing <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.myTeam() }}</span>
-          </p>
+          @if (game.reviewMode()) {
+            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
+              Reviewing
+              <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.whiteName() ?? 'White' }}</span>
+              vs
+              <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.blackName() ?? 'Black' }}</span>
+            </p>
+          } @else {
+            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
+              You're playing <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.myTeam() }}</span>
+            </p>
+          }
           @if (game.result() === 'Ongoing') {
             <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
               @if (!game.opponentJoined()) {
@@ -81,7 +90,7 @@
             <div class="min-w-0 flex-1">
               <div
                 class="relative aspect-square w-full overflow-hidden rounded-lg border border-[var(--mat-sys-outline-variant)] shadow-md transition-opacity"
-                [class.opacity-60]="isViewingHistory()"
+                [class.opacity-60]="isViewingHistory() && !game.reviewMode()"
               >
                 <div class="grid h-full w-full grid-cols-8">
                   @for (row of rows(); track row[0].y) {
@@ -171,6 +180,32 @@
               <li class="py-1 text-[var(--mat-sys-outline)]">No moves yet</li>
             }
           </ol>
+
+          @if (game.moveHistory().length > 0) {
+            <div class="flex items-center justify-between border-t border-[var(--mat-sys-outline-variant)] px-3 py-2">
+              <button
+                matButton="elevated"
+                (click)="stepBack()"
+                [disabled]="!canStepBack()"
+                aria-label="Previous move"
+                class="!min-w-0 !px-4 !text-xl !leading-none !font-bold"
+              >
+                &lt;
+              </button>
+              <span class="text-xs text-[var(--mat-sys-on-surface-variant)]">
+                {{ currentPly() }} / {{ game.moveHistory().length }}
+              </span>
+              <button
+                matButton="elevated"
+                (click)="stepForward()"
+                [disabled]="!canStepForward()"
+                aria-label="Next move"
+                class="!min-w-0 !px-4 !text-xl !leading-none !font-bold"
+              >
+                &gt;
+              </button>
+            </div>
+          }
         </mat-card>
       </div>
     }

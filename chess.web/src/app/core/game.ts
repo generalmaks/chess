@@ -8,11 +8,14 @@ import { Auth } from './auth';
 import { Board, BoardMove, applyBoardMove, moveToAlgebraicNotation } from './algebraic-notation';
 import {
   CreateGameResponse,
+  GameHistoryEntry,
   GameResult,
+  GameReviewDto,
   GameStateDto,
   JoinGameResponse,
   MoveHistoryEntryDto,
   MoveRequest,
+  PagedResult,
   SquareCoordinate,
   Team,
   TimeControl,
@@ -45,6 +48,10 @@ export class Game {
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private stateReceivedAtMs = Date.now();
 
+  private readonly reviewModeSignal = signal(false);
+  private readonly whiteNameSignal = signal<string | null>(null);
+  private readonly blackNameSignal = signal<string | null>(null);
+
   private readonly gameIdSignal = signal<string | null>(null);
   private readonly myTeamSignal = signal<Team | null>(null);
   private readonly boardSignal = signal<(string | null)[][] | null>(null);
@@ -61,6 +68,9 @@ export class Game {
   // is the board right after moveHistory[i - 1]. Lets the UI jump back to any played ply.
   private readonly positionsSignal = signal<Board[]>([]);
 
+  readonly reviewMode = this.reviewModeSignal.asReadonly();
+  readonly whiteName = this.whiteNameSignal.asReadonly();
+  readonly blackName = this.blackNameSignal.asReadonly();
   readonly gameId = this.gameIdSignal.asReadonly();
   readonly myTeam = this.myTeamSignal.asReadonly();
   readonly board = this.boardSignal.asReadonly();
@@ -91,6 +101,13 @@ export class Game {
     return firstValueFrom(this.http.post<CreateGameResponse>(`${API_BASE_URL}/games${query}`, {}));
   }
 
+  getHistory(page: number, pageSize = 10): Promise<PagedResult<GameHistoryEntry>> {
+    const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    return firstValueFrom(
+      this.http.get<PagedResult<GameHistoryEntry>>(`${API_BASE_URL}/games/history?${query.toString()}`)
+    );
+  }
+
   async joinGame(gameId: string): Promise<void> {
     await this.ensureConnected();
 
@@ -105,6 +122,31 @@ export class Game {
     this.refreshTimer = setInterval(() => {
       firstValueFrom(this.auth.refresh()).catch(() => {});
     }, TOKEN_REFRESH_INTERVAL_MS);
+  }
+
+  async loadReview(gameId: string): Promise<void> {
+    await this.connection?.stop();
+    this.connection = null;
+
+    const review = await firstValueFrom(
+      this.http.get<GameReviewDto>(`${API_BASE_URL}/games/${gameId}`)
+    );
+
+    const { positions, sans } = reconstructGame(review.moves, review.result);
+
+    this.reviewModeSignal.set(true);
+    this.whiteNameSignal.set(review.whitePlayerName);
+    this.blackNameSignal.set(review.blackPlayerName);
+    this.gameIdSignal.set(gameId);
+    this.myTeamSignal.set(review.playerColor);
+    this.opponentJoinedSignal.set(true);
+    this.resultSignal.set(review.result);
+    this.currentTurnSignal.set(review.moves.length % 2 === 0 ? 'White' : 'Black');
+    this.whiteTimeRemainingBaseSignal.set(null);
+    this.blackTimeRemainingBaseSignal.set(null);
+    this.boardSignal.set(positions[positions.length - 1]);
+    this.positionsSignal.set(positions);
+    this.moveHistorySignal.set(sans);
   }
 
   async makeMove(fromX: number, fromY: number, toX: number, toY: number, promotion?: string): Promise<void> {
@@ -168,6 +210,9 @@ export class Game {
 
     await this.connection?.stop();
     this.connection = null;
+    this.reviewModeSignal.set(false);
+    this.whiteNameSignal.set(null);
+    this.blackNameSignal.set(null);
     this.gameIdSignal.set(null);
     this.myTeamSignal.set(null);
     this.boardSignal.set(null);
@@ -251,25 +296,7 @@ export class Game {
   // Rebuilds moveHistory/positions from the persisted moves the hub returns on join,
   // overwriting the single-entry arrays applyState just seeded above.
   private replayHistory(moves: MoveHistoryEntryDto[], finalResult: GameResult): void {
-    let board = INITIAL_BOARD;
-    const positions: Board[] = [board];
-    const sans: string[] = [];
-
-    moves.forEach((entry, i) => {
-      const move: BoardMove = {
-        fromX: entry.fromX,
-        fromY: entry.fromY,
-        toX: entry.toX,
-        toY: entry.toY,
-        promotion: entry.promotedTo,
-      };
-      const next = applyBoardMove(board, move);
-      const resultAfter = i === moves.length - 1 ? finalResult : 'Ongoing';
-      sans.push(moveToAlgebraicNotation(board, move, next, resultAfter));
-      positions.push(next);
-      board = next;
-    });
-
+    const { positions, sans } = reconstructGame(moves, finalResult);
     this.positionsSignal.set(positions);
     this.moveHistorySignal.set(sans);
   }
@@ -286,6 +313,32 @@ export class Game {
     const elapsedSeconds = (this.nowSignal() - this.stateReceivedAtMs) / 1000;
     return Math.max(0, base - elapsedSeconds);
   }
+}
+
+function reconstructGame(
+  moves: MoveHistoryEntryDto[],
+  finalResult: GameResult
+): { positions: Board[]; sans: string[] } {
+  let board = INITIAL_BOARD;
+  const positions: Board[] = [board];
+  const sans: string[] = [];
+
+  moves.forEach((entry, i) => {
+    const move: BoardMove = {
+      fromX: entry.fromX,
+      fromY: entry.fromY,
+      toX: entry.toX,
+      toY: entry.toY,
+      promotion: entry.promotedTo,
+    };
+    const next = applyBoardMove(board, move);
+    const resultAfter = i === moves.length - 1 ? finalResult : 'Ongoing';
+    sans.push(moveToAlgebraicNotation(board, move, next, resultAfter));
+    positions.push(next);
+    board = next;
+  });
+
+  return { positions, sans };
 }
 
 function errorMessage(err: unknown): string {

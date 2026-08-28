@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -58,6 +58,10 @@ export class Game implements OnInit, OnDestroy {
   protected readonly isViewingHistory = computed(
     () => this.viewPly() !== null && this.viewPly() !== this.game.moveHistory().length
   );
+
+  protected readonly currentPly = computed(() => this.viewPly() ?? this.game.moveHistory().length);
+  protected readonly canStepBack = computed(() => this.currentPly() > 0);
+  protected readonly canStepForward = computed(() => this.currentPly() < this.game.moveHistory().length);
 
   protected readonly displayBoard = computed<(string | null)[][] | null>(() => {
     const ply = this.viewPly();
@@ -180,7 +184,11 @@ export class Game implements OnInit, OnDestroy {
     try {
       await this.game.joinGame(gameId);
     } catch {
-      this.joinError.set('Could not join that game. Check the game ID and try again.');
+      try {
+        await this.game.loadReview(gameId);
+      } catch {
+        this.joinError.set('Could not open that game. Check the game ID and try again.');
+      }
     }
   }
 
@@ -215,6 +223,27 @@ export class Game implements OnInit, OnDestroy {
   protected returnToLive(): void {
     this.selected.set(null);
     this.viewPly.set(null);
+  }
+
+  protected stepBack(): void {
+    if (this.canStepBack()) {
+      this.viewMove(this.currentPly() - 1);
+    }
+  }
+
+  protected stepForward(): void {
+    if (this.canStepForward()) {
+      this.viewMove(this.currentPly() + 1);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'ArrowLeft') {
+      this.stepBack();
+    } else if (event.key === 'ArrowRight') {
+      this.stepForward();
+    }
   }
 
   protected async onSquareClick(square: Square): Promise<void> {
