@@ -11,8 +11,16 @@ public abstract class GameOrchestratorTestBase
     protected static (GameOrchestrator Orchestrator, MockGameRepository Repository) CreateOrchestrator()
     {
         var repository = new MockGameRepository();
-        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object, new MockPlayerRepository().Object);
+        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object, SeededPlayers().Object);
         return (orchestrator, repository);
+    }
+
+    private static MockPlayerRepository SeededPlayers()
+    {
+        var players = new MockPlayerRepository();
+        players.AddedPlayers.Add(new Model.Player.Player { Id = WhitePlayerId, Username = "white", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
+        players.AddedPlayers.Add(new Model.Player.Player { Id = BlackPlayerId, Username = "black", PasswordHash = "x", CreatedAtUtc = DateTime.UtcNow, EloRating = 1200 });
+        return players;
     }
 
     // Seeds both players into the player repository so EndGameAsync has ratings to update.
@@ -32,7 +40,7 @@ public abstract class GameOrchestratorTestBase
     {
         var repository = new MockGameRepository();
         var time = new ManualTimeProvider(DateTimeOffset.UnixEpoch);
-        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object, new MockPlayerRepository().Object, time);
+        var orchestrator = new GameOrchestrator(new GameStore(), repository.Object, SeededPlayers().Object, time);
         return (orchestrator, repository, time);
     }
 }

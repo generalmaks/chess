@@ -11,7 +11,9 @@ public sealed record Game(
     Guid? WhitePlayerId,
     Guid? BlackPlayerId,
     Team? DrawOfferedBy,
-    IReadOnlyList<MoveRecord> MoveHistory)
+    IReadOnlyList<MoveRecord> MoveHistory,
+    string? WhitePlayerName = null,
+    string? BlackPlayerName = null)
 {
     public Team? TeamForPlayer(Guid playerId)
     {

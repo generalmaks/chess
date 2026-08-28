@@ -60,7 +60,22 @@ public class GameOrchestrator(
         }
 
         store.RegisterConnection(connectionId, gameId, team.Value);
-        return (room.ToGame(), team.Value);
+
+        var game = room.ToGame() with
+        {
+            WhitePlayerName = await ResolveNameAsync(room.WhitePlayerId, ct),
+            BlackPlayerName = await ResolveNameAsync(room.BlackPlayerId, ct),
+        };
+        return (game, team.Value);
+    }
+
+    private async Task<string?> ResolveNameAsync(Guid? playerId, CancellationToken ct)
+    {
+        if (playerId is not { } id)
+            return null;
+
+        var player = await playerRepository.GetByIdAsync(id, ct) ?? throw new PlayerNotFoundException(id);
+        return player.Username;
     }
 
     public async Task<Model.Chess.Game.Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default)

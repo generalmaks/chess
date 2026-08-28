@@ -2,7 +2,13 @@ namespace Chess.Api.Game;
 
 public record CreateGameResponse(string GameId, string Team);
 
-public record JoinGameResponse(string Team, GameStateDto State, bool OpponentJoined, MoveHistoryEntryDto[] Moves);
+public record JoinGameResponse(
+    string Team,
+    GameStateDto State,
+    bool OpponentJoined,
+    MoveHistoryEntryDto[] Moves,
+    string? WhitePlayerName,
+    string? BlackPlayerName);
 
 public record MoveRequest(int FromX, int FromY, int ToX, int ToY, char? Promotion);
 

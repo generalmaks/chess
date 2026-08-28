@@ -4,6 +4,8 @@ public abstract class GameOrchestrationException(string message) : Exception(mes
 
 public class GameNotFoundException() : GameOrchestrationException("Game not found.");
 
+public class PlayerNotFoundException(Guid playerId) : GameOrchestrationException($"Player {playerId} not found.");
+
 public class GameFullException() : GameOrchestrationException("This game already has two players.");
 
 public class NoActiveConnectionException() : GameOrchestrationException("Call JoinGame first.");

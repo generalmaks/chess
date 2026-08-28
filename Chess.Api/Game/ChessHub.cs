@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Chess.Model.Chess.Board;
 using Chess.Model.Chess.Game;
+using Chess.Model.Chess.Pieces.Chess;
 using Chess.Orchestrator.Game;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -16,13 +17,17 @@ public class ChessHub(IGameOrchestrator orchestrator) : Hub
         var (game, team) = await GuardedAsync(() => orchestrator.JoinAsync(Context.ConnectionId, gameId, GetPlayerId()));
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(gameId));
-        await Clients.OthersInGroup(GroupName(gameId)).SendAsync("PlayerJoined", team.ToString());
+
+        var joinerName = team == Team.White ? game.WhitePlayerName : game.BlackPlayerName;
+        await Clients.OthersInGroup(GroupName(gameId)).SendAsync("PlayerJoined", team.ToString(), joinerName);
 
         return new JoinGameResponse(
             team.ToString(),
             GameStateMapper.ToDto(game.State),
             game.BothPlayersJoined,
-            GameStateMapper.ToMoveHistoryDto(game.MoveHistory));
+            GameStateMapper.ToMoveHistoryDto(game.MoveHistory),
+            game.WhitePlayerName,
+            game.BlackPlayerName);
     }
 
     public async Task MakeMove(MoveRequest request)
