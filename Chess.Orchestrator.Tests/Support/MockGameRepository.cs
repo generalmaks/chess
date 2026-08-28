@@ -14,11 +14,15 @@ public class MockGameRepository
     public List<TrackedGame> AddedGames { get; } = [];
     public List<RecordedMove> AddedMoves { get; } = [];
 
-    // Games returned by GetPlayerGamesAsync; tests populate this directly.
     public List<GameHistoryEntry> HistoryEntries { get; } = [];
+
+    public GameReview? ReviewGame { get; set; }
 
     public MockGameRepository()
     {
+        Mock.Setup(r => r.GetGameForReviewAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ReviewGame);
+
         Mock.Setup(r => r.GetPlayerGamesAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid _, int page, int pageSize, CancellationToken _) => new PagedResult<GameHistoryEntry>
             {

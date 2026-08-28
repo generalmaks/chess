@@ -24,6 +24,14 @@ public record GameHistoryEntryDto(
     int? PlayerEloAfter,
     int MoveCount);
 
+public record GameReviewDto(
+    string GameId,
+    string Result,
+    string? PlayerColor,
+    string? WhitePlayerName,
+    string? BlackPlayerName,
+    MoveHistoryEntryDto[] Moves);
+
 public record GameStateDto(
     string?[][] Board,
     string CurrentTurn,

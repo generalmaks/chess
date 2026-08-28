@@ -112,13 +112,59 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         Assert.Equal(2, body.TotalPages);
 
         var entry = Assert.Single(body.Items);
-        Assert.Equal(gameId.ToString(), entry.GameId);
+        Assert.Equal(gameId.ToString("N"), entry.GameId);
         Assert.Equal("Black", entry.PlayerColor);
         Assert.Equal("Win", entry.Outcome);
         Assert.Equal("opponent", entry.OpponentName);
         Assert.Equal(1200, entry.PlayerEloBefore);
         Assert.Equal(1215, entry.PlayerEloAfter);
         Assert.Equal(42, entry.MoveCount);
+    }
+
+    [Fact]
+    public async Task GameReview_UnknownGame_ReturnsNotFound()
+    {
+        var (client, _, orchestrator) = await AuthenticatedClientAsync();
+        orchestrator
+            .Setup(o => o.GetGameReviewAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new GameNotFoundException());
+
+        var response = await client.GetAsync($"/games/{Guid.NewGuid():N}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GameReview_ReturnsMovesAndPlayerColorFromThePlayerPerspective()
+    {
+        var (client, playerId, orchestrator) = await AuthenticatedClientAsync();
+        var gameId = Guid.NewGuid();
+        orchestrator
+            .Setup(o => o.GetGameReviewAsync(gameId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GameReview
+            {
+                Id = gameId,
+                Result = GameResult.BlackWonByCheckmate,
+                WhitePlayerId = Guid.NewGuid(),
+                WhitePlayerName = "opponent",
+                BlackPlayerId = playerId,
+                BlackPlayerName = "me",
+                Moves =
+                [
+                    new GameReviewMove { FromX = 4, FromY = 1, ToX = 4, ToY = 3 },
+                    new GameReviewMove { FromX = 4, FromY = 6, ToX = 4, ToY = 4 },
+                ],
+            });
+
+        var response = await client.GetAsync($"/games/{gameId:N}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<GameReviewDto>();
+        Assert.Equal(gameId.ToString("N"), body!.GameId);
+        Assert.Equal("Black", body.PlayerColor);
+        Assert.Equal("opponent", body.WhitePlayerName);
+        Assert.Equal(2, body.Moves.Length);
+        Assert.Equal(4, body.Moves[0].FromX);
     }
 
     private async Task<(HttpClient Client, Guid PlayerId, Mock<IGameOrchestrator> Orchestrator)> AuthenticatedClientAsync()

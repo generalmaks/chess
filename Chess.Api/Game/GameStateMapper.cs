@@ -20,7 +20,7 @@ public static class GameStateMapper
         var playerColor = playerIsWhite ? Team.White : Team.Black;
 
         return new GameHistoryEntryDto(
-            entry.Id.ToString(),
+            entry.Id.ToString("N"),
             entry.CreatedAtUtc,
             entry.EndedAtUtc,
             entry.Result.ToString(),
@@ -44,6 +44,24 @@ public static class GameStateMapper
             playerColor == Team.Black ? "Win" : "Loss",
         _ => "Unknown",
     };
+
+    public static GameReviewDto ToReviewDto(GameReview review, Guid playerId)
+    {
+        string? playerColor =
+            review.WhitePlayerId == playerId ? nameof(Team.White)
+            : review.BlackPlayerId == playerId ? nameof(Team.Black)
+            : null;
+
+        return new GameReviewDto(
+            review.Id.ToString("N"),
+            review.Result.ToString(),
+            playerColor,
+            review.WhitePlayerName,
+            review.BlackPlayerName,
+            review.Moves
+                .Select(m => new MoveHistoryEntryDto(m.FromX, m.FromY, m.ToX, m.ToY, m.PromotedTo))
+                .ToArray());
+    }
 
     public static GameStateDto ToDto(GameStateSnapshot state) =>
         new(

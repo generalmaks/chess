@@ -8,6 +8,8 @@ public interface IGameRepository
 
     Task<PagedResult<GameHistoryEntry>> GetPlayerGamesAsync(Guid playerId, int page, int pageSize, CancellationToken ct = default);
 
+    Task<GameReview?> GetGameForReviewAsync(Guid gameId, CancellationToken ct = default);
+
     Task AddMoveAsync(RecordedMove move, CancellationToken ct = default);
 
     Task AssignPlayerAsync(Guid gameId, Team team, Guid playerId, CancellationToken ct = default);

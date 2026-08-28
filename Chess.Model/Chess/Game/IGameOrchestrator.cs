@@ -11,6 +11,8 @@ public interface IGameOrchestrator
 
     Task<PagedResult<GameHistoryEntry>> GetPlayerGamesAsync(Guid playerId, int page, int pageSize, CancellationToken ct = default);
 
+    Task<GameReview> GetGameReviewAsync(Guid gameId, CancellationToken ct = default);
+
     Task<(Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default);
 
     Task<Game> MakeMoveAsync(string connectionId, PieceMove move, char? promotion, CancellationToken ct = default);

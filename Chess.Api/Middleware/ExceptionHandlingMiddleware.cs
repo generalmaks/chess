@@ -1,9 +1,8 @@
+using Chess.Orchestrator.Game;
 using Chess.Orchestrator.Player;
 
 namespace Chess.Api.Middleware;
 
-// Central place to translate domain exceptions into HTTP responses, so controllers and
-// minimal API endpoints don't each need their own try/catch.
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
@@ -19,6 +18,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         catch (AuthException ex)
         {
             await WriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+        }
+        catch (GameNotFoundException ex)
+        {
+            await WriteErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
         }
         catch (Exception ex)
         {

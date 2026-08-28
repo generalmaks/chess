@@ -39,6 +39,9 @@ public class GameOrchestrator(
         return repository.GetPlayerGamesAsync(playerId, page, pageSize, ct);
     }
 
+    public async Task<GameReview> GetGameReviewAsync(Guid gameId, CancellationToken ct = default) =>
+        await repository.GetGameForReviewAsync(gameId, ct) ?? throw new GameNotFoundException();
+
     public async Task<(Model.Chess.Game.Game Game, Team Team)> JoinAsync(string connectionId, string gameId, Guid playerId, CancellationToken ct = default)
     {
         var room = store.GetGame(gameId) ?? throw new GameNotFoundException();

@@ -45,6 +45,48 @@ public class GameRepository(ChessDbContext db) : IGameRepository
         };
     }
 
+    public async Task<GameReview?> GetGameForReviewAsync(Guid gameId, CancellationToken ct = default)
+    {
+        var game = await db.Games
+            .AsNoTracking()
+            .Where(g => g.Id == gameId)
+            .Select(g => new
+            {
+                g.Id,
+                g.Result,
+                g.WhitePlayerId,
+                g.BlackPlayerId,
+                WhiteName = g.WhitePlayer!.Username,
+                BlackName = g.BlackPlayer!.Username,
+                Moves = g.Moves
+                    .OrderBy(m => m.Ply)
+                    .Select(m => new GameReviewMove
+                    {
+                        FromX = m.FromX,
+                        FromY = m.FromY,
+                        ToX = m.ToX,
+                        ToY = m.ToY,
+                        PromotedTo = m.PromotionPieceCode,
+                    })
+                    .ToList(),
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (game is null)
+            return null;
+
+        return new GameReview
+        {
+            Id = game.Id,
+            Result = game.Result,
+            WhitePlayerId = game.WhitePlayerId,
+            WhitePlayerName = game.WhiteName,
+            BlackPlayerId = game.BlackPlayerId,
+            BlackPlayerName = game.BlackName,
+            Moves = game.Moves,
+        };
+    }
+
     public async Task AddGameAsync(NewGame game, CancellationToken ct = default)
     {
         db.Games.Add(new GameDao
