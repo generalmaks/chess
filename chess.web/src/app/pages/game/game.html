@@ -7,20 +7,8 @@
     @if (joinError()) {
       <p class="rounded-md bg-red-50 p-4 text-sm text-red-600">{{ joinError() }}</p>
     } @else {
-      <div class="mb-4 flex items-center justify-between">
+      <div class="mb-4 flex items-start justify-between">
         <div>
-          @if (game.reviewMode()) {
-            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
-              Reviewing
-              <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.whiteName() ?? 'White' }}</span>
-              vs
-              <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.blackName() ?? 'Black' }}</span>
-            </p>
-          } @else {
-            <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
-              You're playing <span class="font-medium text-[var(--mat-sys-on-surface)]">{{ game.myTeam() }}</span>
-            </p>
-          }
           @if (game.result() === 'Ongoing') {
             <p class="text-sm text-[var(--mat-sys-on-surface-variant)]">
               @if (!game.opponentJoined()) {
@@ -38,7 +26,9 @@
               </div>
             }
           } @else {
-            <p class="text-sm font-semibold text-[var(--mat-sys-on-surface)]">{{ resultLabel() }}</p>
+            <p class="text-sm font-semibold text-[var(--mat-sys-on-surface)]">
+              {{ game.reviewMode() ? 'Review · ' : '' }}{{ resultLabel() }}
+            </p>
           }
         </div>
 
@@ -66,17 +56,23 @@
 
       <div class="flex items-start gap-6">
         <div class="min-w-0 flex-1">
-          @if (opponentTimeLabel(); as time) {
-            <div class="mb-2 flex justify-end">
-              <span
-                class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
-                [class.bg-slate-800]="!isOpponentClockLow()"
-                [class.bg-red-600]="isOpponentClockLow()"
-              >
-                {{ time }}
+          <div class="mb-2 flex">
+            <div class="w-6"></div>
+            <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
+              <span class="truncate text-2xl font-bold text-[var(--mat-sys-on-surface)]">
+                {{ game.opponentName() ?? (game.opponentJoined() ? 'Opponent' : 'Waiting…') }}
               </span>
+              @if (opponentTimeLabel(); as time) {
+                <span
+                  class="shrink-0 rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
+                  [class.bg-slate-800]="!isOpponentClockLow()"
+                  [class.bg-red-600]="isOpponentClockLow()"
+                >
+                  {{ time }}
+                </span>
+              }
             </div>
-          }
+          </div>
 
           <div class="flex">
             <div class="flex w-6 flex-col">
@@ -133,17 +129,23 @@
             </div>
           </div>
 
-          @if (myTimeLabel(); as time) {
-            <div class="mt-2 flex justify-end">
-              <span
-                class="rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
-                [class.bg-slate-800]="!isMyClockLow()"
-                [class.bg-red-600]="isMyClockLow()"
-              >
-                {{ time }}
+          <div class="mt-2 flex">
+            <div class="w-6"></div>
+            <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
+              <span class="truncate text-2xl font-bold text-[var(--mat-sys-on-surface)]">
+                {{ game.myName() ?? 'You' }}
               </span>
+              @if (myTimeLabel(); as time) {
+                <span
+                  class="shrink-0 rounded-md px-3 py-1 font-mono text-lg font-semibold text-white"
+                  [class.bg-slate-800]="!isMyClockLow()"
+                  [class.bg-red-600]="isMyClockLow()"
+                >
+                  {{ time }}
+                </span>
+              }
             </div>
-          }
+          </div>
         </div>
 
         <mat-card class="hidden w-56 shrink-0 !rounded-lg p-0 sm:block">

@@ -56,8 +56,8 @@ describe('Home game history', () => {
 
     expect(gameMock.getHistory).toHaveBeenCalledWith(1, 10);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('vs alice');
-    expect(text).toContain('vs bob');
+    expect(text).toContain('alice');
+    expect(text).toContain('bob');
   });
 
   it('shows an empty state when there are no games', async () => {

@@ -60,6 +60,8 @@ export interface JoinGameResponse {
   state: GameStateDto;
   opponentJoined: boolean;
   moves: MoveHistoryEntryDto[];
+  whitePlayerName: string | null;
+  blackPlayerName: string | null;
 }
 
 export interface GameReviewDto {

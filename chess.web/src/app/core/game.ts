@@ -86,6 +86,9 @@ export class Game {
     () => this.result() === 'Ongoing' && this.opponentJoined() && this.currentTurn() === this.myTeam()
   );
 
+  readonly myName = computed(() => this.nameForTeam(this.myTeamSignal()));
+  readonly opponentName = computed(() => this.nameForTeam(this.opponentOf(this.myTeamSignal())));
+
   readonly whiteTimeRemainingSeconds = computed(() => this.liveTimeRemaining('White'));
   readonly blackTimeRemainingSeconds = computed(() => this.liveTimeRemaining('Black'));
 
@@ -115,6 +118,8 @@ export class Game {
 
     this.gameIdSignal.set(gameId);
     this.myTeamSignal.set(response.team);
+    this.whiteNameSignal.set(response.whitePlayerName);
+    this.blackNameSignal.set(response.blackPlayerName);
     this.opponentJoinedSignal.set(response.opponentJoined);
     this.applyState(response.state);
     this.replayHistory(response.moves, response.state.result);
@@ -238,8 +243,10 @@ export class Game {
       .build();
 
     this.connection.on('StateUpdated', (state: GameStateDto) => this.applyState(state));
-    this.connection.on('PlayerJoined', () => {
+    this.connection.on('PlayerJoined', (team: Team, name: string | null) => {
       this.opponentJoinedSignal.set(true);
+      if (team === 'White') this.whiteNameSignal.set(name);
+      else this.blackNameSignal.set(name);
       this.stateReceivedAtMs = Date.now();
       this.nowSignal.set(this.stateReceivedAtMs);
     });
@@ -299,6 +306,18 @@ export class Game {
     const { positions, sans } = reconstructGame(moves, finalResult);
     this.positionsSignal.set(positions);
     this.moveHistorySignal.set(sans);
+  }
+
+  private nameForTeam(team: Team | null): string | null {
+    if (team === 'White') return this.whiteNameSignal();
+    if (team === 'Black') return this.blackNameSignal();
+    return null;
+  }
+
+  private opponentOf(team: Team | null): Team | null {
+    if (team === 'White') return 'Black';
+    if (team === 'Black') return 'White';
+    return null;
   }
 
   private liveTimeRemaining(team: Team): number | null {
