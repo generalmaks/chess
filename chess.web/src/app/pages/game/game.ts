@@ -182,13 +182,9 @@ export class Game implements OnInit, OnDestroy {
     }
 
     try {
-      await this.game.joinGame(gameId);
+      await this.game.open(gameId);
     } catch {
-      try {
-        await this.game.loadReview(gameId);
-      } catch {
-        this.joinError.set('Could not open that game. Check the game ID and try again.');
-      }
+      this.joinError.set('Could not open that game. Check the game ID and try again.');
     }
   }
 

@@ -129,14 +129,21 @@ export class Game {
     }, TOKEN_REFRESH_INTERVAL_MS);
   }
 
-  async loadReview(gameId: string): Promise<void> {
-    await this.connection?.stop();
-    this.connection = null;
-
+  async open(gameId: string): Promise<void> {
     const review = await firstValueFrom(
       this.http.get<GameReviewDto>(`${API_BASE_URL}/games/${gameId}`)
     );
 
+    if (review.result === 'Ongoing') {
+      await this.joinGame(gameId);
+    } else {
+      await this.connection?.stop();
+      this.connection = null;
+      this.applyReview(gameId, review);
+    }
+  }
+
+  private applyReview(gameId: string, review: GameReviewDto): void {
     const { positions, sans } = reconstructGame(review.moves, review.result);
 
     this.reviewModeSignal.set(true);
