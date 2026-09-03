@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 namespace Chess.Api;
 
@@ -115,6 +116,8 @@ public class Startup(IConfiguration configuration)
     public virtual void Configure(WebApplication app)
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+        app.UseSerilogRequestLogging();
 
         if (app.Environment.IsDevelopment())
         {

@@ -13,6 +13,9 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <!-- Pinned to the 9.x line to keep Microsoft.Extensions.* transitives on 9.0.x
+             alongside the rest of the ASP.NET Core packages. -->
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <!-- Pinned below Swashbuckle 10.x: that line requires Microsoft.OpenApi >= 2.7.5 (a breaking
              rewrite), which conflicts with Microsoft.AspNetCore.OpenApi 9.0.18's Microsoft.OpenApi
              1.6.17 dependency and breaks controller/assembly scanning at runtime. -->
