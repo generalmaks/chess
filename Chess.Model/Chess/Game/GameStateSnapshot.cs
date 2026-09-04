@@ -1,3 +1,4 @@
+using Chess.Model.Chess.Board;
 using Chess.Model.Chess.Pieces.Chess;
 
 namespace Chess.Model.Chess.Game;
@@ -7,7 +8,8 @@ public sealed record GameStateSnapshot(
     Team CurrentTurn,
     GameResult Result,
     TimeSpan? WhiteTimeRemaining,
-    TimeSpan? BlackTimeRemaining)
+    TimeSpan? BlackTimeRemaining,
+    MoveRecord? LastMove)
 {
     public static GameStateSnapshot Capture(ChessGameSession session)
     {
@@ -27,6 +29,7 @@ public sealed record GameStateSnapshot(
             session.CurrentTurn,
             session.Result,
             session.TimeRemaining(Team.White),
-            session.TimeRemaining(Team.Black));
+            session.TimeRemaining(Team.Black),
+            session.Board.MoveHistory.Count > 0 ? session.Board.MoveHistory[^1] : null);
     }
 }

@@ -151,8 +151,8 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
                 BlackPlayerName = "me",
                 Moves =
                 [
-                    new GameReviewMove { FromX = 4, FromY = 1, ToX = 4, ToY = 3 },
-                    new GameReviewMove { FromX = 4, FromY = 6, ToX = 4, ToY = 4 },
+                    new GameReviewMove { FromX = 4, FromY = 1, ToX = 4, ToY = 3, San = "e4" },
+                    new GameReviewMove { FromX = 4, FromY = 6, ToX = 4, ToY = 4, San = "e5" },
                 ],
             });
 
@@ -165,6 +165,7 @@ public class GamesEndpointTests(ChessApiFactory factory) : IClassFixture<ChessAp
         Assert.Equal("opponent", body.WhitePlayerName);
         Assert.Equal(2, body.Moves.Length);
         Assert.Equal(4, body.Moves[0].FromX);
+        Assert.Equal("e4", body.Moves[0].San);
     }
 
     private async Task<(HttpClient Client, Guid PlayerId, Mock<IGameOrchestrator> Orchestrator)> AuthenticatedClientAsync()

@@ -1,3 +1,9 @@
 namespace Chess.Model.Chess.Board;
 
-public record MoveRecord(char PieceCode, PieceMove Move, bool IsCastling, char? PromotedTo = null, bool IsEnPassant = false);
+public record MoveRecord(
+    char PieceCode,
+    PieceMove Move,
+    bool IsCastling,
+    char? PromotedTo = null,
+    bool IsEnPassant = false,
+    string San = "");

@@ -22,7 +22,7 @@ namespace Chess.Dal.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Chess.Dal.Entities.GameEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Chess.GameDao", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,7 +66,7 @@ namespace Chess.Dal.Migrations
                     b.ToTable("Games");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.MoveEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Chess.MoveDao", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,6 +101,13 @@ namespace Chess.Dal.Migrations
                     b.Property<char?>("PromotionPieceCode")
                         .HasColumnType("character(1)");
 
+                    b.Property<string>("San")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasDefaultValue("");
+
                     b.Property<string>("Team")
                         .IsRequired()
                         .HasMaxLength(8)
@@ -120,7 +127,7 @@ namespace Chess.Dal.Migrations
                     b.ToTable("Moves");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.PlayerEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Player.PlayerDao", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -152,14 +159,14 @@ namespace Chess.Dal.Migrations
                     b.ToTable("Players");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.GameEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Chess.GameDao", b =>
                 {
-                    b.HasOne("Chess.Dal.Entities.PlayerEntity", "BlackPlayer")
+                    b.HasOne("Chess.Dal.Player.PlayerDao", "BlackPlayer")
                         .WithMany("GamesAsBlack")
                         .HasForeignKey("BlackPlayerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Chess.Dal.Entities.PlayerEntity", "WhitePlayer")
+                    b.HasOne("Chess.Dal.Player.PlayerDao", "WhitePlayer")
                         .WithMany("GamesAsWhite")
                         .HasForeignKey("WhitePlayerId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -169,9 +176,9 @@ namespace Chess.Dal.Migrations
                     b.Navigation("WhitePlayer");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.MoveEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Chess.MoveDao", b =>
                 {
-                    b.HasOne("Chess.Dal.Entities.GameEntity", "Game")
+                    b.HasOne("Chess.Dal.Chess.GameDao", "Game")
                         .WithMany("Moves")
                         .HasForeignKey("GameId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -180,12 +187,12 @@ namespace Chess.Dal.Migrations
                     b.Navigation("Game");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.GameEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Chess.GameDao", b =>
                 {
                     b.Navigation("Moves");
                 });
 
-            modelBuilder.Entity("Chess.Dal.Entities.PlayerEntity", b =>
+            modelBuilder.Entity("Chess.Dal.Player.PlayerDao", b =>
                 {
                     b.Navigation("GamesAsBlack");
 

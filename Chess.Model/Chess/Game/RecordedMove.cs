@@ -15,5 +15,6 @@ public sealed record RecordedMove
     public char? PromotionPieceCode { get; init; }
     public bool IsCastling { get; init; }
     public bool IsEnPassant { get; init; }
+    public required string San { get; init; }
     public required DateTime PlayedAtUtc { get; init; }
 }

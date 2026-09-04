@@ -243,6 +243,7 @@ public class GameOrchestrator(
             PromotionPieceCode = lastMove.PromotedTo,
             IsCastling = lastMove.IsCastling,
             IsEnPassant = lastMove.IsEnPassant,
+            San = lastMove.San,
             PlayedAtUtc = DateTime.UtcNow,
         }, ct);
 

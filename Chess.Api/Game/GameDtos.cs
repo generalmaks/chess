@@ -12,7 +12,7 @@ public record JoinGameResponse(
 
 public record MoveRequest(int FromX, int FromY, int ToX, int ToY, char? Promotion);
 
-public record MoveHistoryEntryDto(int FromX, int FromY, int ToX, int ToY, char? PromotedTo);
+public record MoveHistoryEntryDto(int FromX, int FromY, int ToX, int ToY, char? PromotedTo, string San);
 
 public record SquareDto(int X, int Y);
 
@@ -43,4 +43,5 @@ public record GameStateDto(
     string CurrentTurn,
     string Result,
     double? WhiteTimeRemainingSeconds,
-    double? BlackTimeRemainingSeconds);
+    double? BlackTimeRemainingSeconds,
+    MoveHistoryEntryDto? LastMove);

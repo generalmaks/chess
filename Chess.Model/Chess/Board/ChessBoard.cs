@@ -57,46 +57,49 @@ public class ChessBoard
             throw new MoveLeavesKingInCheckException();
 
         var movingPiece = startSpot.Piece;
+        var pieceCode = movingPiece.PieceCode;
+        var isCastling = movingPiece is King && Math.Abs(pieceMove.To.X - pieceMove.From.X) == 2;
+        var isEnPassant = movingPiece is Pawn && pieceMove.To.X != pieceMove.From.X && endSpot.Piece is null;
+        var isCapture = endSpot.Piece is not null || isEnPassant;
+
+        char? promotedTo = null;
+        if (movingPiece is Pawn && pieceMove.To.Y is 0 or 7)
+        {
+            promotedTo = promotionPieceCode ?? 'Q';
+            if (!PromotionPieces.Contains(promotedTo.Value))
+                throw new InvalidPromotionPieceException();
+        }
+
         switch (movingPiece)
         {
-            case Pawn pawn when pieceMove.To.Y is 0 or 7:
-                var promoteTo = promotionPieceCode ?? 'Q';
-                if (!PromotionPieces.Contains(promoteTo))
-                    throw new InvalidPromotionPieceException();
-
-                movingPiece = PieceFactory.CreatePiece(promoteTo, team);
-                MoveHistory.Add(new MoveRecord(pawn.PieceCode, pieceMove, false, promoteTo));
+            case Pawn when promotedTo is { } promoted:
+                movingPiece = PieceFactory.CreatePiece(promoted, team);
                 break;
             case Pawn pawn:
                 pawn.HasMadeFirstMove = true;
-                bool isEnPassant = pieceMove.To.X != pieceMove.From.X && endSpot.Piece is null;
                 if (isEnPassant)
                     GetSpot(new PieceCord(pieceMove.To.X, pieceMove.From.Y)).SetPiece(null);
-                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false, IsEnPassant: isEnPassant));
                 break;
             case King king:
                 king.HasMoved = true;
-                if (Math.Abs(pieceMove.To.X - pieceMove.From.X) == 2)
-                {
+                if (isCastling)
                     CastleRook(pieceMove);
-                    MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, true));
-                }
-                else
-                {
-                    MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
-                }
                 break;
             case Rook rook:
                 rook.HasMoved = true;
-                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
-                break;
-            default:
-                MoveHistory.Add(new MoveRecord(movingPiece.PieceCode, pieceMove, false));
                 break;
         }
-        
+
         endSpot.SetPiece(movingPiece);
         startSpot.SetPiece(null);
+
+        var opponent = team == Team.White ? Team.Black : Team.White;
+        var isCheck = IsInCheck(opponent);
+        var isCheckmate = isCheck && !HasAnyLegalMoves(opponent);
+
+        var san = SanNotation.ForMove(
+            this, pieceMove, team, pieceCode, isCapture, isCastling, promotedTo, isCheck, isCheckmate);
+        MoveHistory.Add(new MoveRecord(pieceCode, pieceMove, isCastling, promotedTo, isEnPassant, san));
     }
 
     public bool IsSquareAttacked(PieceCord coord, Team byTeam)

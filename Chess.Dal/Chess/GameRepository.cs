@@ -67,6 +67,7 @@ public class GameRepository(ChessDbContext db) : IGameRepository
                         ToX = m.ToX,
                         ToY = m.ToY,
                         PromotedTo = m.PromotionPieceCode,
+                        San = m.San,
                     })
                     .ToList(),
             })
@@ -115,6 +116,7 @@ public class GameRepository(ChessDbContext db) : IGameRepository
             PromotionPieceCode = move.PromotionPieceCode,
             IsCastling = move.IsCastling,
             IsEnPassant = move.IsEnPassant,
+            San = move.San,
             PlayedAtUtc = move.PlayedAtUtc,
         });
 

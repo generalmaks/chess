@@ -43,6 +43,7 @@ public class ChessDbContext(DbContextOptions<ChessDbContext> options) : DbContex
         modelBuilder.Entity<MoveDao>(entity =>
         {
             entity.Property(m => m.Team).HasConversion<string>().HasMaxLength(8);
+            entity.Property(m => m.San).HasMaxLength(8).HasDefaultValue("");
 
             entity.HasIndex(m => new { m.GameId, m.Ply }).IsUnique();
         });

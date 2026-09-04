@@ -82,6 +82,7 @@ public class MakeMoveAsyncTests : GameOrchestratorTestBase
         Assert.Null(moveEntity.PromotionPieceCode);
         Assert.False(moveEntity.IsCastling);
         Assert.False(moveEntity.IsEnPassant);
+        Assert.Equal("e4", moveEntity.San);
 
         var gameEntity = Assert.Single(repo.AddedGames);
         Assert.Equal(GameResult.Ongoing, gameEntity.Result);

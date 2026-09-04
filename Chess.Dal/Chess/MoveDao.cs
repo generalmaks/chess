@@ -8,8 +8,7 @@ public class MoveDao
 
     public Guid GameId { get; set; }
     public GameDao Game { get; set; } = null!;
-
-    // 0-based order within the game; white moves on even plies, black on odd.
+    
     public int Ply { get; set; }
     public Team Team { get; set; }
     public char PieceCode { get; set; }
@@ -20,5 +19,6 @@ public class MoveDao
     public char? PromotionPieceCode { get; set; }
     public bool IsCastling { get; set; }
     public bool IsEnPassant { get; set; }
+    public string San { get; set; } = "";
     public DateTime PlayedAtUtc { get; set; }
 }

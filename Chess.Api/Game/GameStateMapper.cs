@@ -59,7 +59,7 @@ public static class GameStateMapper
             review.WhitePlayerName,
             review.BlackPlayerName,
             review.Moves
-                .Select(m => new MoveHistoryEntryDto(m.FromX, m.FromY, m.ToX, m.ToY, m.PromotedTo))
+                .Select(m => new MoveHistoryEntryDto(m.FromX, m.FromY, m.ToX, m.ToY, m.PromotedTo, m.San))
                 .ToArray());
     }
 
@@ -69,10 +69,12 @@ public static class GameStateMapper
             state.CurrentTurn.ToString(),
             state.Result.ToString(),
             state.WhiteTimeRemaining?.TotalSeconds,
-            state.BlackTimeRemaining?.TotalSeconds);
+            state.BlackTimeRemaining?.TotalSeconds,
+            state.LastMove is { } move ? ToMoveDto(move) : null);
 
     public static MoveHistoryEntryDto[] ToMoveHistoryDto(IReadOnlyList<MoveRecord> history) =>
-        history
-            .Select(move => new MoveHistoryEntryDto(move.Move.From.X, move.Move.From.Y, move.Move.To.X, move.Move.To.Y, move.PromotedTo))
-            .ToArray();
+        history.Select(ToMoveDto).ToArray();
+
+    private static MoveHistoryEntryDto ToMoveDto(MoveRecord move) =>
+        new(move.Move.From.X, move.Move.From.Y, move.Move.To.X, move.Move.To.Y, move.PromotedTo, move.San);
 }

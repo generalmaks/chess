@@ -20,4 +20,5 @@ public sealed record GameReviewMove
     public required int ToX { get; init; }
     public required int ToY { get; init; }
     public char? PromotedTo { get; init; }
+    public string San { get; init; } = "";
 }

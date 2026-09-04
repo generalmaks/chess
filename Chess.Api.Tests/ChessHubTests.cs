@@ -116,6 +116,7 @@ public class ChessHubTests(ChessApiFactory factory) : IClassFixture<ChessApiFact
 
         var updated = await stateUpdated.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal("Black", updated.CurrentTurn);
+        Assert.Equal("e4", updated.LastMove?.San);
     }
 
     private async Task<HubConnection> ConnectAsync(string accessToken)
