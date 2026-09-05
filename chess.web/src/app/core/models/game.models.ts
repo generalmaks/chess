@@ -53,6 +53,7 @@ export interface GameStateDto {
   result: GameResult;
   whiteTimeRemainingSeconds: number | null;
   blackTimeRemainingSeconds: number | null;
+  lastMove: MoveHistoryEntryDto | null;
 }
 
 export interface JoinGameResponse {
@@ -79,6 +80,7 @@ export interface MoveHistoryEntryDto {
   toX: number;
   toY: number;
   promotedTo: string | null;
+  san: string;
 }
 
 export interface SquareCoordinate {

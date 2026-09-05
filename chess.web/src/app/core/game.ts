@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from './api-config';
 import { Auth } from './auth';
-import { Board, BoardMove, applyBoardMove, moveToAlgebraicNotation } from './algebraic-notation';
+import { Board, BoardMove, applyBoardMove } from './algebraic-notation';
 import {
   CreateGameResponse,
   GameHistoryEntry,
@@ -122,7 +122,7 @@ export class Game {
     this.blackNameSignal.set(response.blackPlayerName);
     this.opponentJoinedSignal.set(response.opponentJoined);
     this.applyState(response.state);
-    this.replayHistory(response.moves, response.state.result);
+    this.replayHistory(response.moves);
 
     this.refreshTimer = setInterval(() => {
       firstValueFrom(this.auth.refresh()).catch(() => {});
@@ -144,7 +144,7 @@ export class Game {
   }
 
   private applyReview(gameId: string, review: GameReviewDto): void {
-    const { positions, sans } = reconstructGame(review.moves, review.result);
+    const { positions, sans } = reconstructGame(review.moves);
 
     this.reviewModeSignal.set(true);
     this.whiteNameSignal.set(review.whitePlayerName);
@@ -265,7 +265,6 @@ export class Game {
 
   private applyState(state: GameStateDto): void {
     const previousBoard = this.boardSignal();
-    const movedTeam = this.currentTurnSignal();
 
     this.boardSignal.set(state.board);
     this.currentTurnSignal.set(state.currentTurn);
@@ -277,8 +276,10 @@ export class Game {
 
     if (previousBoard === null) {
       this.positionsSignal.set([state.board]);
-    } else if (movedTeam) {
-      this.recordMove(previousBoard, movedTeam, state);
+    } else if (state.lastMove && !boardsEqual(previousBoard, state.board)) {
+      // A move landed (resign/draw/timeout leave the board untouched).
+      this.moveHistorySignal.update((moves) => [...moves, state.lastMove!.san]);
+      this.positionsSignal.update((positions) => [...positions, state.board]);
     }
 
     if (state.whiteTimeRemainingSeconds !== null && this.tickTimer === null) {
@@ -286,31 +287,10 @@ export class Game {
     }
   }
 
-  // Backend only ever pushes full board snapshots, so each move is reconstructed by
-  // diffing consecutive boards rather than received as an explicit from/to.
-  private recordMove(previousBoard: Board, movedTeam: Team, state: GameStateDto): void {
-    if (boardsEqual(previousBoard, state.board)) {
-      return;
-    }
-
-    const move = inferBoardMove(previousBoard, state.board, movedTeam);
-    if (!move) {
-      return;
-    }
-
-    try {
-      const san = moveToAlgebraicNotation(previousBoard, move, state.board, state.result);
-      this.moveHistorySignal.update((moves) => [...moves, san]);
-      this.positionsSignal.update((positions) => [...positions, state.board]);
-    } catch {
-      // Unreconstructable diff (e.g. joining mid-game with no prior snapshot); skip it.
-    }
-  }
-
   // Rebuilds moveHistory/positions from the persisted moves the hub returns on join,
   // overwriting the single-entry arrays applyState just seeded above.
-  private replayHistory(moves: MoveHistoryEntryDto[], finalResult: GameResult): void {
-    const { positions, sans } = reconstructGame(moves, finalResult);
+  private replayHistory(moves: MoveHistoryEntryDto[]): void {
+    const { positions, sans } = reconstructGame(moves);
     this.positionsSignal.set(positions);
     this.moveHistorySignal.set(sans);
   }
@@ -341,15 +321,12 @@ export class Game {
   }
 }
 
-function reconstructGame(
-  moves: MoveHistoryEntryDto[],
-  finalResult: GameResult
-): { positions: Board[]; sans: string[] } {
+// positions[i] is the board after moves[i - 1]; SAN comes straight from the backend.
+function reconstructGame(moves: MoveHistoryEntryDto[]): { positions: Board[]; sans: string[] } {
   let board = INITIAL_BOARD;
   const positions: Board[] = [board];
-  const sans: string[] = [];
 
-  moves.forEach((entry, i) => {
+  for (const entry of moves) {
     const move: BoardMove = {
       fromX: entry.fromX,
       fromY: entry.fromY,
@@ -357,14 +334,11 @@ function reconstructGame(
       toY: entry.toY,
       promotion: entry.promotedTo,
     };
-    const next = applyBoardMove(board, move);
-    const resultAfter = i === moves.length - 1 ? finalResult : 'Ongoing';
-    sans.push(moveToAlgebraicNotation(board, move, next, resultAfter));
-    positions.push(next);
-    board = next;
-  });
+    board = applyBoardMove(board, move);
+    positions.push(board);
+  }
 
-  return { positions, sans };
+  return { positions, sans: moves.map((entry) => entry.san) };
 }
 
 function errorMessage(err: unknown): string {
@@ -383,44 +357,4 @@ function boardsEqual(a: Board, b: Board): boolean {
     }
   }
   return true;
-}
-
-// Recovers the from/to squares (and promotion, if any) the mover's team produced,
-// since the hub only ever broadcasts full board snapshots, never the move itself.
-function inferBoardMove(before: Board, after: Board, movedTeam: Team): BoardMove | null {
-  const prefix = movedTeam === 'White' ? 'w' : 'b';
-  const vacated: { x: number; y: number }[] = [];
-  const occupied: { x: number; y: number }[] = [];
-
-  for (let x = 0; x < 8; x++) {
-    for (let y = 0; y < 8; y++) {
-      const b = before[x][y];
-      const a = after[x][y];
-      if (b === a) continue;
-      if (b?.[0] === prefix && a === null) vacated.push({ x, y });
-      if (a?.[0] === prefix && b?.[0] !== prefix) occupied.push({ x, y });
-    }
-  }
-
-  let from: { x: number; y: number } | undefined;
-  let to: { x: number; y: number } | undefined;
-
-  if (vacated.length === 1 && occupied.length === 1) {
-    [from] = vacated;
-    [to] = occupied;
-  } else if (vacated.length === 2 && occupied.length === 2) {
-    // Castling: king and rook both vacate/land; the king square is the SAN move.
-    from = vacated.find((v) => before[v.x][v.y]?.[1] === 'K');
-    to = occupied.find((o) => after[o.x][o.y]?.[1] === 'K');
-  }
-
-  if (!from || !to) {
-    return null;
-  }
-
-  const fromType = before[from.x][from.y]?.[1];
-  const toType = after[to.x][to.y]?.[1];
-  const promotion = toType && toType !== fromType ? toType : undefined;
-
-  return { fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, promotion };
 }
