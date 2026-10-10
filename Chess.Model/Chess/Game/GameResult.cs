@@ -13,5 +13,8 @@ public enum GameResult
     BlackWonOnTime,
     StalemateDraw,
     FiftyMoveRuleDraw,
-    DrawByAgreement
+    DrawByAgreement,
+    InsufficientMaterialDraw,
+    ThreefoldRepetitionDraw,
+    TimeoutInsufficientMaterialDraw
 }

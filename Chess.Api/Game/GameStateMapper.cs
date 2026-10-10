@@ -35,7 +35,9 @@ public static class GameStateMapper
     private static string OutcomeFor(GameResult result, Team playerColor) => result switch
     {
         GameResult.Ongoing => "Ongoing",
-        GameResult.StalemateDraw or GameResult.FiftyMoveRuleDraw or GameResult.DrawByAgreement => "Draw",
+        GameResult.StalemateDraw or GameResult.FiftyMoveRuleDraw or GameResult.DrawByAgreement
+            or GameResult.InsufficientMaterialDraw or GameResult.ThreefoldRepetitionDraw
+            or GameResult.TimeoutInsufficientMaterialDraw => "Draw",
         GameResult.WhiteWonByCheckmate or GameResult.WhiteWonByResignation
             or GameResult.WhiteWonByAbandonment or GameResult.WhiteWonOnTime =>
             playerColor == Team.White ? "Win" : "Loss",

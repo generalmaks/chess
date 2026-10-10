@@ -130,6 +130,107 @@ public class ChessBoard
 
     public bool IsStalemate(Team team) => !IsInCheck(team) && !HasAnyLegalMoves(team);
 
+    // Neither side can ever deliver mate
+    public bool IsDeadPosition() => !HasMatingMaterial(Team.White) && !HasMatingMaterial(Team.Black);
+    
+    public bool HasMatingMaterial(Team team)
+    {
+        var own = new List<(Piece Piece, PieceCord Coord)>();
+        var enemy = new List<(Piece Piece, PieceCord Coord)>();
+        foreach (var column in Spots)
+        {
+            foreach (var spot in column)
+            {
+                if (spot.Piece is null or King)
+                    continue;
+                (spot.Piece.Team == team ? own : enemy).Add((spot.Piece, spot.Coord));
+            }
+        }
+
+        if (own.Count == 0)
+            return false;
+
+        if (own.Any(p => p.Piece is Pawn or Rook or Queen))
+            return true;
+
+        if (own is [{ Piece: Knight }])
+            return enemy.Count > 0;
+
+        if (own.All(p => p.Piece is Bishop))
+        {
+            var bishopColor = SquareColor(own[0].Coord);
+            if (own.Any(p => SquareColor(p.Coord) != bishopColor))
+                return true;
+            
+            return enemy.Any(p => p.Piece is not Bishop || SquareColor(p.Coord) != bishopColor);
+        }
+        
+        return true;
+    }
+
+    private static int SquareColor(PieceCord coord) => (coord.X + coord.Y) % 2;
+
+    // Identifies a position for repetition purposes: placement, side to move, castling
+    // rights and en passant availability. En passant only counts when a capture is actually legal.
+    public string GetPositionKey(Team sideToMove)
+    {
+        var key = new System.Text.StringBuilder(80);
+        for (int y = 0; y < 8; y++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                key.Append(Spots[x][y].Piece is { } piece
+                    ? piece.Team == Team.White ? piece.PieceCode : char.ToLowerInvariant(piece.PieceCode)
+                    : '.');
+            }
+        }
+
+        key.Append(sideToMove == Team.White ? 'w' : 'b');
+        AppendCastlingRights(key, Team.White, 0);
+        AppendCastlingRights(key, Team.Black, 7);
+
+        if (EnPassantTarget(sideToMove) is { } target)
+            key.Append('e').Append(target.X);
+
+        return key.ToString();
+    }
+
+    private void AppendCastlingRights(System.Text.StringBuilder key, Team team, int rank)
+    {
+        if (Spots[4][rank].Piece is not King { HasMoved: false } king || king.Team != team)
+            return;
+
+        if (Spots[7][rank].Piece is Rook { HasMoved: false } kingside && kingside.Team == team)
+            key.Append(team == Team.White ? 'K' : 'k');
+        if (Spots[0][rank].Piece is Rook { HasMoved: false } queenside && queenside.Team == team)
+            key.Append(team == Team.White ? 'Q' : 'q');
+    }
+
+    private PieceCord? EnPassantTarget(Team sideToMove)
+    {
+        if (MoveHistory.Count == 0)
+            return null;
+
+        var lastMove = MoveHistory[^1];
+        if (lastMove.PieceCode != 'P' || Math.Abs(lastMove.Move.To.Y - lastMove.Move.From.Y) != 2)
+            return null;
+
+        var target = new PieceCord(lastMove.Move.To.X, (lastMove.Move.From.Y + lastMove.Move.To.Y) / 2);
+        foreach (var dx in (int[])[-1, 1])
+        {
+            var x = lastMove.Move.To.X + dx;
+            if (x is < 0 or > 7)
+                continue;
+
+            var from = new PieceCord(x, lastMove.Move.To.Y);
+            if (GetSpot(from).Piece is Pawn pawn && pawn.Team == sideToMove &&
+                GetLegalMoves(from).Contains(new PieceMove(from, target)))
+                return target;
+        }
+
+        return null;
+    }
+
     private bool HasAnyLegalMoves(Team team)
     {
         foreach (var column in Spots)

@@ -46,27 +46,23 @@ public class MakeMoveTests
         var session = new ChessGameSession();
         session.Board.Clear();
         session.Board.Place(new King(Team.White), 0, 0);
-        session.Board.Place(new King(Team.Black), 7, 7);
-        session.Board.Place(new Knight(Team.White), 1, 0);
-        session.Board.Place(new Knight(Team.Black), 6, 7);
+        session.Board.Place(new King(Team.Black), 0, 7);
+        session.Board.Place(new Rook(Team.White), 1, 3);
+        session.Board.Place(new Rook(Team.Black), 1, 4);
 
-        var whiteAt = new PieceCord(1, 0);
-        var whiteAlt = new PieceCord(2, 2);
-        var blackAt = new PieceCord(6, 7);
-        var blackAlt = new PieceCord(5, 5);
+        // Rook tours of length 7 and 13 never revisit a position within 100 plies,
+        // so threefold repetition can't end the game first.
+        PieceCord[] whiteTour = [.. Enumerable.Range(1, 7).Select(x => new PieceCord(x, 3))];
+        PieceCord[] blackTour =
+        [
+            .. Enumerable.Range(1, 7).Select(x => new PieceCord(x, 4)),
+            .. new[] { 7, 6, 5, 4, 3, 1 }.Select(x => new PieceCord(x, 5)),
+        ];
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 50; i++)
         {
-            if (session.CurrentTurn == Team.White)
-            {
-                session.MakeMove(new PieceMove(whiteAt, whiteAlt));
-                (whiteAt, whiteAlt) = (whiteAlt, whiteAt);
-            }
-            else
-            {
-                session.MakeMove(new PieceMove(blackAt, blackAlt));
-                (blackAt, blackAlt) = (blackAlt, blackAt);
-            }
+            session.MakeMove(new PieceMove(whiteTour[i % 7], whiteTour[(i + 1) % 7]));
+            session.MakeMove(new PieceMove(blackTour[i % 13], blackTour[(i + 1) % 13]));
         }
 
         Assert.Equal(100, session.HalfmoveClock);

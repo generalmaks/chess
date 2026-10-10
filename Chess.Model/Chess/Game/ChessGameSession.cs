@@ -8,6 +8,7 @@ public class GameAlreadyEndedException() : Exception("The game has already ended
 public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? timeProvider = null)
 {
     private const int FiftyMoveRuleHalfMoveLimit = 100;
+    private const int RepetitionLimit = 3;
 
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private TimeSpan? _whiteTimeRemaining = timeControl?.InitialTime;
@@ -28,6 +29,9 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
 
     private readonly List<Piece> _piecesCapturedByWhite = [];
     private readonly List<Piece> _piecesCapturedByBlack = [];
+
+    // How many times each position (see ChessBoard.GetPositionKey) has occurred.
+    private readonly Dictionary<string, int> _positionCounts = [];
 
     public TimeSpan? TimeRemaining(Team team)
     {
@@ -56,7 +60,11 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
         if (TimeRemaining(CurrentTurn) != TimeSpan.Zero)
             return false;
 
-        Result = CurrentTurn == Team.White ? GameResult.BlackWonOnTime : GameResult.WhiteWonOnTime;
+        var winner = CurrentTurn == Team.White ? Team.Black : Team.White;
+        if (!Board.HasMatingMaterial(winner))
+            Result = GameResult.TimeoutInsufficientMaterialDraw;
+        else
+            Result = winner == Team.White ? GameResult.WhiteWonOnTime : GameResult.BlackWonOnTime;
         return true;
     }
 
@@ -66,6 +74,9 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
             throw new GameAlreadyEndedException();
 
         var movingTeam = CurrentTurn;
+        // Recorded lazily so a board set up after construction still counts its starting position.
+        if (_positionCounts.Count == 0)
+            RecordPosition();
         var isPawnMove = Board.Spots[move.From.X][move.From.Y].Piece is Pawn;
         var targetPiece = Board.Spots[move.To.X][move.To.Y].Piece;
         // A possible en passant victim, snapshotted before the board mutates the square.
@@ -83,7 +94,8 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
         TickClock(movingTeam);
         CurrentTurn = movingTeam == Team.White ? Team.Black : Team.White;
 
-        UpdateResult();
+        var repetitions = RecordPosition();
+        UpdateResult(repetitions);
     }
 
     private void TickClock(Team movingTeam)
@@ -132,12 +144,24 @@ public class ChessGameSession(TimeControl? timeControl = null, TimeProvider? tim
         capturedBy.Add(captured);
     }
 
-    private void UpdateResult()
+    private int RecordPosition()
+    {
+        var key = Board.GetPositionKey(CurrentTurn);
+        var count = _positionCounts.GetValueOrDefault(key) + 1;
+        _positionCounts[key] = count;
+        return count;
+    }
+
+    private void UpdateResult(int repetitions)
     {
         if (Board.IsCheckmate(CurrentTurn))
             Result = CurrentTurn == Team.White ? GameResult.BlackWonByCheckmate : GameResult.WhiteWonByCheckmate;
         else if (Board.IsStalemate(CurrentTurn))
             Result = GameResult.StalemateDraw;
+        else if (Board.IsDeadPosition())
+            Result = GameResult.InsufficientMaterialDraw;
+        else if (repetitions >= RepetitionLimit)
+            Result = GameResult.ThreefoldRepetitionDraw;
         else if (HalfmoveClock >= FiftyMoveRuleHalfMoveLimit)
             Result = GameResult.FiftyMoveRuleDraw;
     }

@@ -142,6 +142,8 @@ string FormatResultMessage(GameResult result) => result switch
     GameResult.StalemateDraw => "Stalemate! The game is a draw. Press Q to quit.",
     GameResult.FiftyMoveRuleDraw => "Draw by the fifty-move rule. Press Q to quit.",
     GameResult.DrawByAgreement => "Draw by agreement. Press Q to quit.",
+    GameResult.InsufficientMaterialDraw => "Draw by insufficient material. Press Q to quit.",
+    GameResult.ThreefoldRepetitionDraw => "Draw by threefold repetition. Press Q to quit.",
     _ => string.Empty
 };
 
