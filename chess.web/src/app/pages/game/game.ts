@@ -35,6 +35,9 @@ const RESULT_LABELS: Record<string, string> = {
   StalemateDraw: 'Draw by stalemate',
   FiftyMoveRuleDraw: 'Draw by fifty-move rule',
   DrawByAgreement: 'Draw by agreement',
+  InsufficientMaterialDraw: 'Draw by insufficient material',
+  ThreefoldRepetitionDraw: 'Draw by threefold repetition',
+  TimeoutInsufficientMaterialDraw: 'Draw, time out vs insufficient material',
 };
 
 

@@ -12,7 +12,10 @@ export type GameResult =
   | 'BlackWonOnTime'
   | 'StalemateDraw'
   | 'FiftyMoveRuleDraw'
-  | 'DrawByAgreement';
+  | 'DrawByAgreement'
+  | 'InsufficientMaterialDraw'
+  | 'ThreefoldRepetitionDraw'
+  | 'TimeoutInsufficientMaterialDraw';
 
 export type GameOutcome = 'Win' | 'Loss' | 'Draw' | 'Ongoing' | 'Unknown';
 
