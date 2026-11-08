@@ -125,12 +125,16 @@ public class Startup(IConfiguration configuration)
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection();
-        
+        app.UseCors(DevCorsPolicy);
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
         app.UseDefaultFiles();
         app.UseStaticFiles();
 
-        app.UseCors(DevCorsPolicy);
         app.UseAuthentication();
         app.UseAuthorization();
 
